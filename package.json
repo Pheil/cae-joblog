@@ -1,0 +1,19 @@
+{
+  "name": "cae-joblog-sdk",
+  "title": "CAE Job Log",
+  "id": "jid1-9sWae8KGaLLirw@jetpack",
+  "description": "Modifies metric report and adds job log and work assignment features.",
+  "author": "Paul Heil",
+  "keywords": [],
+  "license": "MPL 2.0",
+  "version": "1.9.2",
+  "homepage": "http://tamilan.na.ten/cae/",
+  "iconURL": "./icon-48.png",
+  "icon64URL": "./icon-64.png",
+  "main": "index.js",
+  "dependencies": ["addon-sdk"],
+  "engines": {
+    "firefox": ">=37.0*"
+  },
+  "license": "MIT"
+}

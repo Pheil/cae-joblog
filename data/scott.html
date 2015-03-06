@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+  <title>Job Log &raquo; SCOTT</title>
+  <link rel="stylesheet" type="text/css" href="css/jquery.gridster.css">
+  <link rel="stylesheet" type="text/css" href="css/user.css">
+  <link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+</head>
+<body>
+    <h1>Scott Braddock</h1>
+    <p>List of currently assigned jobs.</p>
+
+    <div class="gridster">
+        <ul></ul>
+    </div>
+    <div class="container"><button id="reload" title="Refresh widget data" class="rel_but">Update Page</button></div>
+    <div class="container"><button id="delete" title="Delete ALL user widget notes and sizes" class="del_but">Delete Notes</button></div>
+    <div class="container"><button id="clearSize" title="Reset widget dimensions and locations" class="cs_but">Reset Sizes</button></div>
+    <script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/ss.js"></script>
+    <script src="js/jquery.gridster.js" type="text/javascript" charset="utf-8"></script>
+
+<script>
+    $( ".rel_but" ).button({ icons: {primary:'ui-icon-arrowrefresh-1-w'} });
+    $( ".del_but" ).button({ icons: {primary:'ui-icon-trash'},text:false });
+    $( ".cs_but" ).button({ icons: {primary:'ui-icon-transferthick-e-w'} });
+</script>
+    <script type="text/javascript" id="code">
+    var gridster;
+
+    $(function(){
+
+      gridster = $(".gridster > ul").gridster({
+          widget_margins: [10, 10],
+          widget_base_dimensions: [100, 55],
+          helper: 'clone',
+          resize: {
+            enabled: true,
+            stop: function(e, ui, $widget) {
+                var s = gridster.serialize();
+                var s2 = JSON.stringify(s);
+                localStorage.setItem("Widget_serial_s", s2);
+            }
+          }
+      }).data('gridster');
+      
+        $('.gridster').on('click', function() {
+            var s = gridster.serialize();
+            var s2 = JSON.stringify(s);
+            try {
+                localStorage.setItem("Widget_serial_s", s2);
+            } catch (e) {
+              if (e == QUOTA_EXCEEDED_ERR) {
+                alert('Simple storage quota exceeded!');
+              }
+              console.error(e + " Error");
+            }
+        })
+    });
+    </script>
+    <script>
+    function init() {
+          var thewidgets = clonedContentScriptObject.thewidgets;
+          for (var h=0; h < thewidgets.length; h++) {
+            if (localStorage.getItem('Widget_serial_s')) {
+                var serArray = JSON.parse(localStorage.getItem('Widget_serial_s'));
+                var c = serArray[h].col;
+                var r = serArray[h].row;
+                var x = serArray[h].size_x;
+                var y = serArray[h].size_y;           
+                gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNote(this.id);"></textarea></li>', x, y, c, r);
+            }
+            else {
+                gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNote(this.id);"></textarea></li>', 2, 2);
+            }
+          }
+          
+        //Reload when button pressed
+        var works = document.getElementById("reload");
+        works.addEventListener("click", function() {
+            gridster.remove_all_widgets();
+            init();
+            location.reload();
+      }, false);
+        getNoteStart();
+    }
+    
+        //Delete when button pressed
+        var clearSS = document.getElementById("delete");
+        clearSS.addEventListener("click", function() {
+            clearAllSS();
+        }, false);
+        
+        //Reset sizes when button pressed
+        var clearSize = document.getElementById("clearSize");
+        clearSize.addEventListener("click", function() {
+            clearSizes("_s");
+        }, false);
+    
+    $(window).load(function() {
+        window.setTimeout(init, 200);
+    });
+    </script>
+</body>
+</html>
