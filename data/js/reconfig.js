@@ -17,26 +17,53 @@ function modA() {
     table.parentNode.removeChild(table);
     }
 
-    // Remove HR Line
-    var hr = document.getElementsByTagName('HR')[0];
-    if (hr) {
-    hr.parentNode.removeChild(hr);
+	// Remove HR Line (Bottom & Top)
+	var hr = document.getElementsByTagName('HR')[1];
+	if (hr) {
+	hr.parentNode.removeChild(hr);
+	}
+	hr = document.getElementsByTagName('HR')[0];
+	if (hr) {
+	hr.parentNode.removeChild(hr);
+	}
+    
+    //Remove close and previous buttons
+	var input = document.getElementsByTagName('input')[1];
+	if (input) {
+	input.parentNode.removeChild(input);
+	}
+	input = document.getElementsByTagName('input')[0];
+	if (input) {
+	input.parentNode.removeChild(input);
+	}
+    
+    //Remove all BR (Bottom & Top)
+    var br = document.body.getElementsByTagName('BR');
+    while(br.length > 0) {
+        br[0].parentNode.removeChild(br[0]);
     }
     
-    //Remove BR and junk error text
-    var br = document.getElementsByTagName('BR')[1];
-    br.parentNode.removeChild(br.nextSibling);
+    //Remove total found
+	document.body.innerHTML = document.body.innerHTML.replace(/Total Metric Records Found: [0-9]+/ig,"");
 
     // Remove "EWS Metric Results" text
     var h1 = document.getElementsByTagName('H1')[0];
     if (h1) {
     h1.parentNode.removeChild(h1);
-    }
+    }    
+    
+    // Remove Projects row
+    $('table td:first-child').each(function(index,Element){
+        var tdValue=$(Element).text();
+        if(tdValue == "Projects:"){
+            $(Element).closest('tr').remove();
+        }
+    });
 
-    // Remove "Contact R. Fox" text
-    var b = document.getElementsByTagName('b')[0];
-    if (b) {
-    b.parentNode.removeChild(b);
+	// Remove print and rev dates
+    var b = document.body.getElementsByTagName('b');
+    while(b.length > 0) {
+        b[0].parentNode.removeChild(b[0]);
     }
     
 // Changes page title
@@ -77,31 +104,40 @@ var links = document.getElementsByTagName("a");
     table_b.setAttribute('class', 'sortable');
     table_b.setAttribute('id', 'thetable');
     
-    // Remove column 7-19
-    var tables;
-    tables = document.getElementById('thetable');
-    for (var j = 19; j >= 7; j--) {
-        for (var i = tables.rows.length - 1; i >= 0; i--) {
-            tables.rows[i].deleteCell(j);
-        }
+    // Remove column 8-20
+    var tables = document.getElementById('thetable');
+    for (var j = 20; j >= 8; j--) {
+        $("th").remove(":nth-child(" + j + ")");
+        $("td").remove(":nth-child(" + j + ")");
     }
-    // Remove column 2
-    for (var i = tables.rows.length - 1; i >= 0; i--) {
-        tables.rows[i].deleteCell(1);
-    }
-    // Remove PDD column
-    for (var i = tables.rows.length - 1; i >= 0; i--) {
-        tables.rows[i].deleteCell(4);
-    }
+    
+    // Remove column 6 (PDD)
+    $('table tr td:nth-child(6)').remove();
+    $('table tr th:nth-child(6)').remove();
+
+    // Remove column 2 (PSO)
+    $('table tr td:nth-child(2)').remove();
+    $('table tr th:nth-child(2)').remove();
     
     // Add header cell for column 6
     var th = document.createElement('th');
     th.innerHTML = "ENG";
     tables.rows[0].appendChild(th);
+    
+    for (var i = tables.rows.length - 1; i >= 0; i--) {
+        //If CAE Cell = "NA" delete whole row
+        $('table td:nth-child(5)').each(function(index,Element){
+            var tdValue=$(Element).text();
+            if(tdValue == "NA"){
+                $(Element).closest('tr').remove();
+            }
+        });
+    }
 
-    for (var i = tables.rows.length - 1; i >= 0; i--) {  
+    for (var i = tables.rows.length - 1; i >= 0; i--) {
         //Add cell for assigned name
         if (i !== 0) {
+            //console.log(i);
             tables.rows[i].insertCell(5);
             tables.rows[i].cells[5].innerHTML = "None";  
         }
@@ -112,10 +148,7 @@ var links = document.getElementsByTagName("a");
             tables.rows[i].draggable='true';
             tables.rows[i].id=ews;
         var classname;
-        //If CAE Cell = "NA" delete whole row
-        if (cae == "NA") {
-            tables.deleteRow(i);
-        }
+
         //If there is a date then disable row
         if (/[0-9]+-[A-Z]+-[0-9]+/.test(cae)) {
             tables.rows[i].setAttribute('draggable', 'false');
