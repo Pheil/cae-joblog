@@ -332,9 +332,10 @@ pageMod.PageMod({
         
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
-            context: [cm.SelectorContext("td"), cm.URLContext("http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL*")],
+            context: [cm.SelectorContext("tr"), cm.URLContext("http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL*")],
             image: self.data.url("./uEWS.png"),
-            contentScript: 'self.on("click", function (node, data) {' +
+            contentScript: 'self.on("click", function (node) {' +
+                         '  console.log("Clicked: " + node.nodeName + " with ID: " + node.id);' +
                          '  var row = document.getElementById(node.id);' +
                          '  var owner = row.cells[5].innerHTML;' +
                          '  var ews = node.id;' +
@@ -343,7 +344,7 @@ pageMod.PageMod({
                          '  owner: owner' +
                          '  });' +
                          '  self.postMessage(upChange);' +
-                         '  row.setAttribute("class", "dnd");' +
+                         '  row.setAttribute("class", "dnd border-fade wobble-horizontal");' +
                          '  row.setAttribute("style", "background:#FFFFFF;color:#000000;");' +
                          '  row.cells[5].innerHTML = "None";' +
                          '});',

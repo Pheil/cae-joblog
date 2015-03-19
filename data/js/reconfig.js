@@ -174,7 +174,7 @@ var links = document.getElementsByTagName("a");
     ews_array.splice(ews_array.length-1, 1);
     owner_array.splice(owner_array.length-1, 1);
     //console.log(ews_array);
-    //console.table(ews_array);             //ACTIVE IN FF 34.0?
+    //console.table(ews_array);             //ACTIVE? not working in FF37
     UpdateMaster(ews_array, owner_array);
 
 }
@@ -710,6 +710,7 @@ function modB(){
     
     var tables = document.getElementById('thetable');
 // Compare current EWS list to user logged list and highlight if already assigned
+// Unassigns if dCHK is equal to non-breaking space (IE the job is marked as complete)
     self.port.emit("rtn_logged_g", "guy");
     self.port.once("userLogEWS_g", 
     function chk_vs_logged_ews(all_logged_ews) {
@@ -718,12 +719,21 @@ function modB(){
         }
         //for (var g = tables.rows.length - 1; g >= 0; g--) {
         for (var g=0; g < tables.rows.length; g++) {
-            var ews = tables.rows[g].cells[0].textContent; 
+            var ews = tables.rows[g].cells[0].textContent;
+            var dCHK = tables.rows[g].cells[4].textContent;
             for (var h=0; h < all_logged_ews.length; h++) {
-                //console.log(all_logged_ews[h]);
                 if (all_logged_ews[h] == ews) {
-                    tables.rows[g].className+= " guy";
-                    tables.rows[g].cells[5].innerHTML = "Guy";            //Add assigned name
+                    if (dCHK == String.fromCharCode(160)) {
+                        tables.rows[g].className+= " guy";
+                        tables.rows[g].cells[5].innerHTML = "Guy";
+                    }
+                    else { //Job has completed date so unassign
+                        var upChange = JSON.stringify({
+                            ews: ews,
+                            owner: 'suzhou'
+                        });
+                        unassign(upChange);
+                    } 
                 }
             }
         }
@@ -743,10 +753,20 @@ function modB(){
         }
         for (var g=0; g < tables.rows.length; g++) {
             var ews = tables.rows[g].cells[0].textContent; 
+            var dCHK = tables.rows[g].cells[4].textContent;
             for (var h=0; h < all_logged_ews.length; h++) {
                 if (all_logged_ews[h] == ews) {
-                    tables.rows[g].className+= " scott";
-                    tables.rows[g].cells[5].innerHTML = "Scott";
+                    if (dCHK == String.fromCharCode(160)) {
+                        tables.rows[g].className+= " scott";
+                        tables.rows[g].cells[5].innerHTML = "Scott";
+                    }
+                    else { //Job has completed date so unassign
+                        var upChange = JSON.stringify({
+                            ews: ews,
+                            owner: 'suzhou'
+                        });
+                        unassign(upChange);
+                    } 
                 }
             }
         }
@@ -763,10 +783,20 @@ function modB(){
         }
         for (var g=0; g < tables.rows.length; g++) {
             var ews = tables.rows[g].cells[0].textContent; 
+            var dCHK = tables.rows[g].cells[4].textContent;
             for (var h=0; h < all_logged_ews.length; h++) {
                 if (all_logged_ews[h] == ews) {
-                    tables.rows[g].className+= " paul";
-                    tables.rows[g].cells[5].innerHTML = "Paul";
+                    if (dCHK == String.fromCharCode(160)) {
+                        tables.rows[g].className+= " paul";
+                        tables.rows[g].cells[5].innerHTML = "Paul";
+                    }
+                    else { //Job has completed date so unassign
+                        var upChange = JSON.stringify({
+                            ews: ews,
+                            owner: 'suzhou'
+                        });
+                        unassign(upChange);
+                    } 
                 }
             }
         }
@@ -782,13 +812,23 @@ function modB(){
             suzhouTotal = all_logged_ews.length;
         }
         for (var g=0; g < tables.rows.length; g++) {
-            var ews = tables.rows[g].cells[0].textContent; 
-            for (var h=0; h < all_logged_ews.length; h++) {
+            var ews = tables.rows[g].cells[0].textContent;
+            var dCHK = tables.rows[g].cells[4].textContent;
+            for (var h=0; h < all_logged_ews.length; h++) { //Loop through and compare to logged values
                 if (all_logged_ews[h] == ews) {
-                    tables.rows[g].className+= " suzhou";
-                    tables.rows[g].cells[5].innerHTML = "Suzhou";
+                    if (dCHK == String.fromCharCode(160)) {
+                        tables.rows[g].className+= " suzhou";
+                        tables.rows[g].cells[5].innerHTML = "Suzhou";
+                    }
+                    else { //Job has completed date so unassign
+                        var upChange = JSON.stringify({
+                            ews: ews,
+                            owner: 'suzhou'
+                        });
+                        unassign(upChange);
+                    } 
                 }
-            }
+            } 
         }
         div_h = document.getElementById('suzhou_note');  
         div_h.innerHTML = suzhouTotal;
