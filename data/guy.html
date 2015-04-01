@@ -57,27 +57,44 @@
               }
               console.error(e + " Error");
             }
-        })
+        });
     });
     </script>
     <script>
     function init() {
-          var thewidgets = clonedContentScriptObject.thewidgets;
-          for (var h=0; h < thewidgets.length; h++) {
-            if (localStorage.getItem('Widget_serial_g')) {
-                var serArray = JSON.parse(localStorage.getItem('Widget_serial_g'));
-                //console.log(serArray[h]);
-                var c = serArray[h].col;
-                var r = serArray[h].row;
-                var x = serArray[h].size_x;
-                var y = serArray[h].size_y;
-                gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNote(this.id);"></textarea></li>', x, y, c, r);
+        var thewidgets = clonedContentScriptObject.thewidgets;
+        var serArray = JSON.parse(localStorage.getItem('Widget_serial_g'));
+        //Check if assigned job qty has changed 
+        //First check if it's ever been set
+        if (localStorage.getItem('Widget_serial_g')) {
+            //Then check if the length has changed
+            if (thewidgets.length != serArray.length) {
+                //Qty changed so clear widget location data
+                clearSizes("_g");
             }
+            //Qty not changed
             else {
-                gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNote(this.id);"></textarea></li>', 2, 2);
+              for (var h=0; h < thewidgets.length; h++) {
+                if (localStorage.getItem('Widget_serial_g')) {
+                    var serArray = JSON.parse(localStorage.getItem('Widget_serial_g'));
+                    var c = serArray[h].col;
+                    var r = serArray[h].row;
+                    var x = serArray[h].size_x;
+                    var y = serArray[h].size_y;
+                    gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNote(this.id);"></textarea></li>', x, y, c, r);
+                }
+                else {
+                    gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNote(this.id);"></textarea></li>', 2, 2);
+                }
+              }
             }
-          }
-          
+        }
+        //Not set so just add widgets
+        else {
+            for (var h=0; h < thewidgets.length; h++) {
+                gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNote(this.id);"></textarea></li>', 2, 2);
+            } 
+        }
         //Reload when button pressed
         var works = document.getElementById("reload");
         works.addEventListener("click", function() {
