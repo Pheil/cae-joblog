@@ -98,11 +98,9 @@ input[type="file"] > input[type="button"]::-moz-focus-inner {
     float: right;
     letter-spacing: 0.5px;
 }
-
 .settings_btn:hover {
     color: #000;
 }
-
 .settings_btn i.options {
     background: url(../btn_icons.png) no-repeat -120px 0;
     width: 13px;
@@ -112,10 +110,10 @@ input[type="file"] > input[type="button"]::-moz-focus-inner {
     margin-top: 2px;
     margin-right: 2px;
 }
-
 button.settings_btn {
     margin-top: 3px;
 }
+
 .oracle {
     background: none;
     border: none;
@@ -125,11 +123,9 @@ button.settings_btn {
     float: left;
     letter-spacing: 0.5px;
 }
-
 .oracle:hover {
     color: #000;
 }
-
 .oracle i.copyr {
     background: url(../btn_icons.png) no-repeat -120px -12px;
     width: 13px;
@@ -139,24 +135,22 @@ button.settings_btn {
     margin-top: 1px;
     margin-right: 2px;
 }
-
 button.oracle {
     margin-top: 3px;
 }
+
 .upload_btn {
     background: none;
     border: none;
     color: #585858;
     font-size: 12px;
     cursor: pointer;
-    float: right;
+    float: left;
     letter-spacing: 0.5px;
 }
-
 .upload_btn:hover {
     color: #000;
 }
-
 .upload_btn i.upload {
     background: url(../btn_icons.png) no-repeat -95px -3px;
     width: 13px;
@@ -166,7 +160,31 @@ button.oracle {
     margin-top: 1px;
     margin-right: 2px;
 }
-
 button.upload_btn {
+    margin-top: 3px;
+}
+
+.admin_btn {
+    background: none;
+    border: none;
+    color: #585858;
+    font-size: 12px;
+    cursor: pointer;
+    float: right;
+    letter-spacing: 0.5px;
+}
+.admin_btn:hover {
+    color: #000;
+}
+.admin_btn i.admin {
+    background: url(images/ui-icons_222222_256x240.png) no-repeat -146px -98px;
+    width: 13px;
+    height: 13px;
+    display: block;
+    float: left;
+    margin-top: 2px;
+    margin-right: 2px;
+}
+button.admin_btn {
     margin-top: 3px;
 }

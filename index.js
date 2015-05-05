@@ -10,21 +10,234 @@ const path = require('sdk/fs/path');
 const cm = require("sdk/context-menu");
 const { ToggleButton } = require("sdk/ui/button/toggle");
 const buttons = require('sdk/ui/button/action');
+//const pageWorker = require("sdk/page-worker");
 var workers = require("sdk/content/worker");
 var users = [];
 users.push("guy", "scott", "paul", "suzhou");
-//var storage = "C:\\Users\\pmh7817\\Desktop\\";
 const utils = require('sdk/window/utils');
-const {Cc,Ci,Cu,components} = require("chrome");
+const {Cc,Ci,Cm,Cu,components} = require("chrome");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
+Cu.import("resource://gre/modules/Services.jsm", this);
+Cu.import("resource://gre/modules/NetUtil.jsm"); 
+Cu.import("resource://gre/modules/FileUtils.jsm"); 
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 const { XMLHttpRequest } = require("sdk/net/xhr");
 const { OS, TextEncoder, TextDecoder } = Cu.import("resource://gre/modules/osfile.jsm", {});
 
+const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
+const UproFile = OS.Path.join(OS.Constants.Path.profileDir, "CAEwidgets");
+
+//Page worker test (need to run with multiprocess FF version to prevent freeze of main process)
+// This content script sends header titles from the page to the add-on:
+//var getFirstParagraph = "var paras = document.getElementsByTagName('tr');" +
+//                        "console.log(paras[0].textContent);" +
+//                        "self.port.emit('loaded', paras);"
+
+//const pageWorker = require("sdk/page-worker").Page({
+//    //contentScript: getFirstParagraph,
+//    //contentScriptFile: './js/reconfig_BG.js',
+//    contentScriptFile: [
+//        "./js/jquery-3.0.0.pre.js",
+//        "./js/reconfig_BG.js"
+//    ],
+//    contentURL: "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No"
+    //REMOVE  TESTING ONLY (FIX ME)
+//});
+
+// pageWorker.port.on("loaded", function(data) {
+    // console.log("Job Total Updated: " + Date());
+    // var filepath = OS.Path.join(UproFile, "CAEJobManager.html");
+    // Write_data(filepath, data);
+    // //pageWorker.contentURL = "http://en.wikipedia.org/wiki/Cheese"
+    // //Update Badge (TEMP CODE)
+    // //var curtotal = 0;
+    // //cae_button.badge = curtotal+1;
+    // //cae_button.badgeColor = "#00aa00";
+// });
+// pageWorker.port.on("badge", function(data) {
+    // //Update Badge (TEMP CODE)
+    // cae_button.badge = data;
+    // cae_button.badgeColor = "#00aa00";
+// });
+//END Page worker test
+
+//FF39 required
+Cu.import("resource://gre/modules/RemotePageManager.jsm");
+let Gmanager = new RemotePages("about:guy");
+let Smanager = new RemotePages("about:scott");
+let Pmanager = new RemotePages("about:paul");
+let Hmanager = new RemotePages("about:suzhou");
+
+// Communication with about:guy
+Gmanager.addMessageListener("GetNote", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile = myFile.path + "\\" + msg.data + ".txt";
+    if (file.exists(myFile) === true ) {
+        var notedata = readText(myFile)
+        var notearray = new Array(notedata, msg.data);
+        Gmanager.sendAsyncMessage("SetNote", notearray);
+    }
+});
+Gmanager.addMessageListener("SaveNote", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile.append(msg.data[0] + ".txt"); 
+    if ( myFile.exists() === false ) 
+         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
+    var ostream = FileUtils.openSafeFileOutputStream(myFile);
+    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
+    createInstance(Ci.nsIScriptableUnicodeConverter); 
+    converter.charset = "UTF-8"; 
+    var istream = converter.convertToInputStream(msg.data[1]); 
+    NetUtil.asyncCopy(istream, ostream, function(status) { 
+        if (!components.isSuccessCode(status))  
+            return; 
+    });
+});
+Gmanager.addMessageListener("SaveSizes", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile.append(msg.data[0] + ".txt"); 
+    if ( myFile.exists() === false ) 
+         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
+    var ostream = FileUtils.openSafeFileOutputStream(myFile);
+    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
+    createInstance(Ci.nsIScriptableUnicodeConverter); 
+    converter.charset = "UTF-8"; 
+    var istream = converter.convertToInputStream(msg.data[1]); 
+    NetUtil.asyncCopy(istream, ostream, function(status) { 
+        if (!components.isSuccessCode(status))  
+            return; 
+    });
+});
+// Communication with about:scott
+Smanager.addMessageListener("GetNote", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile = myFile.path + "\\" + msg.data + ".txt";
+    if (file.exists(myFile) === true ) {
+        var notedata = readText(myFile)
+        var notearray = new Array(notedata, msg.data);
+        Smanager.sendAsyncMessage("SetNote", notearray);
+    }
+});
+Smanager.addMessageListener("SaveNote", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile.append(msg.data[0] + ".txt"); 
+    if ( myFile.exists() === false ) 
+         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
+    var ostream = FileUtils.openSafeFileOutputStream(myFile);
+    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
+    createInstance(Ci.nsIScriptableUnicodeConverter); 
+    converter.charset = "UTF-8"; 
+    var istream = converter.convertToInputStream(msg.data[1]); 
+    NetUtil.asyncCopy(istream, ostream, function(status) { 
+        if (!components.isSuccessCode(status))  
+            return; 
+    });
+});
+Smanager.addMessageListener("SaveSizes", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile.append(msg.data[0] + ".txt"); 
+    if ( myFile.exists() === false ) 
+         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
+    var ostream = FileUtils.openSafeFileOutputStream(myFile);
+    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
+    createInstance(Ci.nsIScriptableUnicodeConverter); 
+    converter.charset = "UTF-8"; 
+    var istream = converter.convertToInputStream(msg.data[1]); 
+    NetUtil.asyncCopy(istream, ostream, function(status) { 
+        if (!components.isSuccessCode(status))  
+            return; 
+    });
+});
+// Communication with about:paul
+Pmanager.addMessageListener("GetNote", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile = myFile.path + "\\" + msg.data + ".txt";
+    if (file.exists(myFile) === true ) {
+        var notedata = readText(myFile)
+        var notearray = new Array(notedata, msg.data);
+        Pmanager.sendAsyncMessage("SetNote", notearray);
+    }
+});
+Pmanager.addMessageListener("SaveNote", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile.append(msg.data[0] + ".txt"); 
+    if ( myFile.exists() === false ) 
+         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
+    var ostream = FileUtils.openSafeFileOutputStream(myFile);
+    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
+    createInstance(Ci.nsIScriptableUnicodeConverter); 
+    converter.charset = "UTF-8"; 
+    var istream = converter.convertToInputStream(msg.data[1]); 
+    NetUtil.asyncCopy(istream, ostream, function(status) { 
+        if (!components.isSuccessCode(status))  
+            return; 
+    });
+});
+Pmanager.addMessageListener("SaveSizes", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile.append(msg.data[0] + ".txt"); 
+    if ( myFile.exists() === false ) 
+         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
+    var ostream = FileUtils.openSafeFileOutputStream(myFile);
+    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
+    createInstance(Ci.nsIScriptableUnicodeConverter); 
+    converter.charset = "UTF-8"; 
+    var istream = converter.convertToInputStream(msg.data[1]); 
+    NetUtil.asyncCopy(istream, ostream, function(status) { 
+        if (!components.isSuccessCode(status))  
+            return; 
+    });
+});
+// Communication with about:suzhou
+Hmanager.addMessageListener("GetNote", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile = myFile.path + "\\" + msg.data + ".txt";
+    if (file.exists(myFile) === true ) {
+        var notedata = readText(myFile)
+        var notearray = new Array(notedata, msg.data);
+        Hmanager.sendAsyncMessage("SetNote", notearray);
+    }
+});
+Hmanager.addMessageListener("SaveNote", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile.append(msg.data[0] + ".txt"); 
+    if ( myFile.exists() === false ) 
+         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
+    var ostream = FileUtils.openSafeFileOutputStream(myFile);
+    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
+    createInstance(Ci.nsIScriptableUnicodeConverter); 
+    converter.charset = "UTF-8"; 
+    var istream = converter.convertToInputStream(msg.data[1]); 
+    NetUtil.asyncCopy(istream, ostream, function(status) { 
+        if (!components.isSuccessCode(status))  
+            return; 
+    });
+});
+Hmanager.addMessageListener("SaveSizes", function(msg) {
+    let myFile = getLocalDirectory();
+    myFile.append(msg.data[0] + ".txt"); 
+    if ( myFile.exists() === false ) 
+         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
+    var ostream = FileUtils.openSafeFileOutputStream(myFile);
+    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
+    createInstance(Ci.nsIScriptableUnicodeConverter); 
+    converter.charset = "UTF-8"; 
+    var istream = converter.convertToInputStream(msg.data[1]); 
+    NetUtil.asyncCopy(istream, ostream, function(status) { 
+        if (!components.isSuccessCode(status))  
+            return; 
+    });
+});
+
 // Preferences
 var prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
 
-//var pathBase = "C:\\Users\\pmh7817\\Desktop\\";
-const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
+//Create empty logfiles if they do not exist
+dfCHK(OS.Path.join(UproFile, "scott.txt"));
+dfCHK(OS.Path.join(UproFile, "paul.txt"));
+dfCHK(OS.Path.join(UproFile, "suzhou.txt"));
+dfCHK(OS.Path.join(UproFile, "guy.txt"));
+
 
 var cae_button = ToggleButton({
   id: "cae-Jobs",
@@ -42,7 +255,7 @@ var cae_button = ToggleButton({
 
 var myScript = "window.addEventListener('click', function(event) {" +
                "  var t = event.target;" +
-               "  var clicky = t.id + '.html';" +
+               "  var clicky = t.id;" +
                "  if (t.nodeName == 'BUTTON')" +
                "    self.port.emit('click_link', clicky);" +
                "}, false);";
@@ -72,11 +285,11 @@ function checkTabs(text) {
 cae_panel.port.on("click_link", function (text) {
     //tabs.open(self.data.url(text));
     //console.log(text);
-    if (text == "oracle.html") {
+    if (text == "oracle") {
         var clipboard = require("sdk/clipboard");
         clipboard.set("<script>var fileref=document.createElement('script');fileref.setAttribute('type','text/javascript');fileref.setAttribute('src', 'http://tamilan.na.ten/cae/EWS/ews.js');document.getElementsByTagName('head')[0].appendChild(fileref);</script><p><a class='iframe' id='caer' href='http://tamilan.na.ten/cae/EWS/viewer.htm'>View Results</a></p>");
     }
-    else if (text == "assign.html") {
+    else if (text == "assign") {
         tabs.open({
             url: "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL",
             isPinned: true,
@@ -84,7 +297,7 @@ cae_panel.port.on("click_link", function (text) {
             inBackground: false
         });
     }
-    else if (text == "upload.html") {
+    else if (text == "upload") {
         tabs.open({
             url: "http://tamilan.na.ten/cae/EWS/",
             isPinned: true,
@@ -92,13 +305,24 @@ cae_panel.port.on("click_link", function (text) {
             inBackground: false
         });
     }
+    else if (text == "admin") {
+        tabs.open({
+            url: "http://tamilan.na.ten/cae/EWS/CAEadmin.php",
+            isPinned: true,
+            inNewWindow: false,
+            inBackground: false
+        });
+    }
     else {
-            var isTab = checkTabs(text);
+            var isTab = checkTabs("about:" + text);
+            //let url = tabs.activeTab.url;
             if (isTab == -1) {
-                //console.log("User tab not found");
-                tabs.activeTab.url = self.data.url(text);     //Open in active tab, but variable doesn't get sent
-                let currentTab = tabs.activeTab;
-                currentTab.reload();
+                    tabs.open({
+                        url: "about:" + text,
+                        isPinned: true,
+                        inNewWindow: false,
+                        inBackground: false
+                    });
             } else {
                 tabs[isTab].activate();
                 tabs[isTab].reload();
@@ -382,11 +606,11 @@ pageMod.PageMod({
 
 // Create a page mod - GUY
 pageMod.PageMod({
-    include: "resource://jid1-9swae8kgallirw-at-jetpack/data/guy.html",
+    include: "about:guy",
     contentScriptWhen: 'start',
     contentScriptFile: './js/guy.js',
     onAttach: function(worker) {
-        // Send user log to content script when requested
+        // Send user logs to content script when requested
         var browserWindow = utils.getMostRecentBrowserWindow();
         var window = browserWindow.content;
         var user;
@@ -397,14 +621,19 @@ pageMod.PageMod({
             if (window[user + '_log_str'] !== null) {
                 window[user + '_log'] = window[user + '_log_str'].split(",");
             }
-            //Send user log array
-            worker.port.emit("userLogHTML_g", window[user + '_log']);
+            // For widgets
+            var filepath = OS.Path.join(UproFile, user + ".txt");
+            window[user + '_path'] = filepath;
+            window[user + 'ws_log'] = readText(window[user + '_path']);
+            //Send user ews log array & widget array
+            var array = new Array(window[user + 'ws_log'], window[user + '_log']);
+            worker.port.emit("userLogHTML_g", array);
         });
     }
 });
 // Create a page mod - SCOTT
 pageMod.PageMod({
-    include: "resource://jid1-9swae8kgallirw-at-jetpack/data/scott.html",
+    include: "about:scott",
     contentScriptWhen: 'start',
     contentScriptFile: './js/scott.js',
     onAttach: function(worker) {
@@ -419,14 +648,19 @@ pageMod.PageMod({
             if (window[user + '_log_str'] !== null) {
                 window[user + '_log'] = window[user + '_log_str'].split(",");
             }
-            //Send user log array
-            worker.port.emit("userLogHTML_s", window[user + '_log']);
+            // For widgets
+            var filepath = OS.Path.join(UproFile, user + ".txt");
+            window[user + '_path'] = filepath;
+            window[user + 'ws_log'] = readText(window[user + '_path']);
+            //Send user ews log array & widget array
+            var array = new Array(window[user + 'ws_log'], window[user + '_log']);
+            worker.port.emit("userLogHTML_s", array);
         });
     }
 });
 // Create a page mod - PAUL
 pageMod.PageMod({
-    include: "resource://jid1-9swae8kgallirw-at-jetpack/data/paul.html",
+    include: "about:paul",
     contentScriptWhen: 'start',
     contentScriptFile: './js/paul.js',
     onAttach: function(worker) {
@@ -442,15 +676,19 @@ pageMod.PageMod({
             if (window[user + '_log_str'] !== null) {
                 window[user + '_log'] = window[user + '_log_str'].split(",");
             }
-            //Send user log array
-            console.log("Log sent to to page script");
-            worker.port.emit("userLogHTML_p", window[user + '_log']);
+            // For widgets
+            var filepath = OS.Path.join(UproFile, user + ".txt");
+            window[user + '_path'] = filepath;
+            window[user + 'ws_log'] = readText(window[user + '_path']);
+            //Send user ews log array & widget array
+            var array = new Array(window[user + 'ws_log'], window[user + '_log']);
+            worker.port.emit("userLogHTML_p", array);
         });
     }
 });
 // Create a page mod - Suzhou
 pageMod.PageMod({
-    include: "resource://jid1-9swae8kgallirw-at-jetpack/data/suzhou.html",
+    include: "about:suzhou",
     contentScriptWhen: 'start',
     contentScriptFile: './js/suzhou.js',
     onAttach: function(worker) {
@@ -465,15 +703,34 @@ pageMod.PageMod({
             if (window[user + '_log_str'] !== null) {
                 window[user + '_log'] = window[user + '_log_str'].split(",");
             }
-            //Send user log array
-            worker.port.emit("userLogHTML_h", window[user + '_log']);
+            // For widgets
+            var filepath = OS.Path.join(UproFile, user + ".txt");
+            window[user + '_path'] = filepath;
+            window[user + 'ws_log'] = readText(window[user + '_path']);
+            //Send user ews log array & widget array
+            var array = new Array(window[user + 'ws_log'], window[user + '_log']);
+            worker.port.emit("userLogHTML_h", array);
         });
     }
 });
 
+function dfCHK(thename){
+    //Create CAE directory and empty file if they don't exist
+    OS.File.makeDir(UproFile);
+    var promiseA = OS.File.writeAtomic(thename, "", { tmpPath: thename + '.tmp' });
+    promiseA.then(
+        function(aVal) {
+            console.log('successfully created file');
+        },
+        function(aReason) {
+            console.log('writeAtomic failed for reason:', aReason);
+        }
+    );
+}
+
 function readText(thename){
     if(!file.exists(thename)){
-        console.log("Log missing");
+        console.log("Log missing!");
         return null;
     }
     let promise = OS.File.stat(thename);
@@ -522,3 +779,151 @@ function Write_data(name, data){
     //   console.log("Data written to", name);
     //}).then(null, function(e) console.error(e));
 }
+
+function getLocalDirectory () { 
+    let directoryService = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties); 
+    let localDir = directoryService.get("ProfD", Ci.nsIFile); 
+    localDir.append("CAEwidgets");
+    //console.log(localDir.path);
+    if (!localDir.exists() || !localDir.isDirectory())  
+        localDir.create(Ci.nsIFile.DIRECTORY_TYPE, parseInt("0774", 8)); 
+    return localDir; 
+}
+
+
+// about constants
+const aboutPaulContract = "@mozilla.org/network/protocol/about;1?what=paul";
+const aboutPaulDescription = "About Paul";
+const aboutPaulUUID = components.ID("b0b3af10-d3b3-11e4-8830-0800200c9a66");
+
+const aboutGuyContract = "@mozilla.org/network/protocol/about;1?what=guy";
+const aboutGuyDescription = "About Guy";
+const aboutGuyUUID = components.ID("b4c22650-df83-11e4-8830-0800200c9a66");
+
+const aboutScottContract = "@mozilla.org/network/protocol/about;1?what=scott";
+const aboutScottDescription = "About Scott";
+const aboutScottUUID = components.ID("b4c22651-df83-11e4-8830-0800200c9a66");
+
+const aboutSuzhouContract = "@mozilla.org/network/protocol/about;1?what=suzhou";
+const aboutSuzhouDescription = "About Suzhou";
+const aboutSuzhouUUID = components.ID("b4c22652-df83-11e4-8830-0800200c9a66");
+
+// about:paul factory
+let aboutPaulFactory = {
+    createInstance: function(outer, iid) {
+        if (outer != null)
+            throw Cr.NS_ERROR_NO_AGGREGATION;
+
+        return aboutPaul.QueryInterface(iid);
+    }
+};
+
+// about:paul
+let aboutPaul = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+
+    getURIFlags: function(aURI) {
+        return Ci.nsIAboutModule.ALLOW_SCRIPT;
+    },
+
+    newChannel: function(aURI) {
+        if (aURI.spec != "about:paul")
+            return;
+
+        let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/paul.html", null, null);
+        return Services.io.newChannelFromURI(uri);
+    }
+};
+
+Cm.QueryInterface(Ci.nsIComponentRegistrar).
+registerFactory(aboutPaulUUID, aboutPaulDescription, aboutPaulContract, aboutPaulFactory);
+
+// about:guy factory
+let aboutGuyFactory = {
+    createInstance: function(outer, iid) {
+        if (outer != null)
+            throw Cr.NS_ERROR_NO_AGGREGATION;
+
+        return aboutGuy.QueryInterface(iid);
+    }
+};
+
+// about:guy
+let aboutGuy = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+
+    getURIFlags: function(aURI) {
+        return Ci.nsIAboutModule.ALLOW_SCRIPT;
+    },
+
+    newChannel: function(aURI) {
+        if (aURI.spec != "about:guy")
+            return;
+
+        let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/guy.html", null, null);
+        return Services.io.newChannelFromURI(uri);
+    }
+};
+
+Cm.QueryInterface(Ci.nsIComponentRegistrar).
+registerFactory(aboutGuyUUID, aboutGuyDescription, aboutGuyContract, aboutGuyFactory);
+
+// about:scott factory
+let aboutScottFactory = {
+    createInstance: function(outer, iid) {
+        if (outer != null)
+            throw Cr.NS_ERROR_NO_AGGREGATION;
+
+        return aboutScott.QueryInterface(iid);
+    }
+};
+
+// about:scott
+let aboutScott = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+
+    getURIFlags: function(aURI) {
+        return Ci.nsIAboutModule.ALLOW_SCRIPT;
+    },
+
+    newChannel: function(aURI) {
+        if (aURI.spec != "about:scott")
+            return;
+
+        let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/scott.html", null, null);
+        return Services.io.newChannelFromURI(uri);
+    }
+};
+
+Cm.QueryInterface(Ci.nsIComponentRegistrar).
+registerFactory(aboutScottUUID, aboutScottDescription, aboutScottContract, aboutScottFactory);
+
+// about:suzhou factory
+let aboutSuzhouFactory = {
+    createInstance: function(outer, iid) {
+        if (outer != null)
+            throw Cr.NS_ERROR_NO_AGGREGATION;
+
+        return aboutSuzhou.QueryInterface(iid);
+    }
+};
+
+// about:suzhou
+let aboutSuzhou = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+
+    getURIFlags: function(aURI) {
+        return Ci.nsIAboutModule.ALLOW_SCRIPT;
+    },
+
+    newChannel: function(aURI) {
+        if (aURI.spec != "about:suzhou")
+            return;
+
+        let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/suzhou.html", null, null);
+        return Services.io.newChannelFromURI(uri);
+    }
+};
+
+Cm.QueryInterface(Ci.nsIComponentRegistrar).
+registerFactory(aboutSuzhouUUID, aboutSuzhouDescription, aboutSuzhouContract, aboutSuzhouFactory);
