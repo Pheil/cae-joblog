@@ -12,14 +12,17 @@ const { ToggleButton } = require("sdk/ui/button/toggle");
 const buttons = require('sdk/ui/button/action');
 //const pageWorker = require("sdk/page-worker");
 var workers = require("sdk/content/worker");
+var notifications = require("sdk/notifications");
 var users = [];
 users.push("guy", "scott", "paul", "suzhou");
 const utils = require('sdk/window/utils');
 const {Cc,Ci,Cm,Cu,components} = require("chrome");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
-Cu.import("resource://gre/modules/NetUtil.jsm"); 
-Cu.import("resource://gre/modules/FileUtils.jsm"); 
+Cu.import("resource://gre/modules/NetUtil.jsm");
+Cu.import("resource://gre/modules/FileUtils.jsm");
+const { defer } = require('sdk/core/promise');
+const { setTimeout } = require("sdk/timers");
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 const { XMLHttpRequest } = require("sdk/net/xhr");
 const { OS, TextEncoder, TextDecoder } = Cu.import("resource://gre/modules/osfile.jsm", {});
@@ -27,39 +30,71 @@ const { OS, TextEncoder, TextDecoder } = Cu.import("resource://gre/modules/osfil
 const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
 const UproFile = OS.Path.join(OS.Constants.Path.profileDir, "CAEwidgets");
 
-//Page worker test (need to run with multiprocess FF version to prevent freeze of main process)
-// This content script sends header titles from the page to the add-on:
-//var getFirstParagraph = "var paras = document.getElementsByTagName('tr');" +
-//                        "console.log(paras[0].textContent);" +
-//                        "self.port.emit('loaded', paras);"
+var myIconURL = self.data.url("./icon-16.png");
 
-//const pageWorker = require("sdk/page-worker").Page({
-//    //contentScript: getFirstParagraph,
-//    //contentScriptFile: './js/reconfig_BG.js',
-//    contentScriptFile: [
-//        "./js/jquery-3.0.0.pre.js",
-//        "./js/reconfig_BG.js"
-//    ],
-//    contentURL: "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No"
-    //REMOVE  TESTING ONLY (FIX ME)
-//});
+function updateJobs(){
+//FF38 Required
+    var hiddenFrames = require("sdk/frame/hidden-frame");
+    var instance = Cc["@mozilla.org/moz/jssubscript-loader;1"];
+    var loader = instance.getService(Ci.mozIJSSubScriptLoader);
 
-// pageWorker.port.on("loaded", function(data) {
-    // console.log("Job Total Updated: " + Date());
-    // var filepath = OS.Path.join(UproFile, "CAEJobManager.html");
-    // Write_data(filepath, data);
-    // //pageWorker.contentURL = "http://en.wikipedia.org/wiki/Cheese"
-    // //Update Badge (TEMP CODE)
-    // //var curtotal = 0;
-    // //cae_button.badge = curtotal+1;
-    // //cae_button.badgeColor = "#00aa00";
-// });
-// pageWorker.port.on("badge", function(data) {
-    // //Update Badge (TEMP CODE)
-    // cae_button.badge = data;
-    // cae_button.badgeColor = "#00aa00";
-// });
-//END Page worker test
+    function loadScript(url) {
+        loader.loadSubScript(url);
+    }
+    //loadScript("resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-3.0.0.pre.js");
+    loadScript("resource://CAEJobLog-at-tenneco-dot-com/data/js/reconfig_BG2.js");
+    
+    let hiddenFrame = hiddenFrames.add(hiddenFrames.HiddenFrame({
+      onReady: function() {
+        this.element.contentWindow.location = "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No";
+        let self = this;
+        this.element.addEventListener("DOMContentLoaded", function() {
+            //Need way to send reconfig code
+            //console.log(self.element.contentDocument.title);
+            var datadump = refreshInformation(self.element.contentDocument);
+
+            //Temp open table in tab
+            function delay(ms, value) {
+              let { promise, resolve } = defer();
+              setTimeout(resolve, ms, value);
+              return promise;
+            }
+
+            function timeout(promise, ms) {
+              let deferred = defer();
+              promise.then(deferred.resolve, deferred.reject);
+              delay(ms, 'timeout').then(deferred.reject);
+              return deferred.promise;
+            }
+            var patha = pathBase + "index.html";
+            //var writePromise = Write_data(patha, datadump);
+            timeout(Write_data(patha, datadump), 20).then(function(data) {
+              ui.display(data);
+            }, function() {
+                //Seems to fire regarless of status
+                //notifications.notify({
+                //    title: "CAE Job Log",
+                //    text: "Network is being too slow, try again later",
+                //    iconURL: myIconURL
+                //});
+            });
+            tabs.open({
+                url: pathBase + "index.html",
+                isPinned: false,
+                inNewWindow: false,
+                inBackground: false
+            });
+            hiddenFrames.remove(hiddenFrame);
+
+        }, true, true);
+            //notifications.notify({
+            //    title: "CAE Job Log",
+            //    text: "Job List Updated",
+            //    iconURL: myIconURL
+            //});
+      }
+    }));    
+}
 
 //FF39 required
 Cu.import("resource://gre/modules/RemotePageManager.jsm");
@@ -77,6 +112,19 @@ Gmanager.addMessageListener("GetNote", function(msg) {
         var notearray = new Array(notedata, msg.data);
         Gmanager.sendAsyncMessage("SetNote", notearray);
     }
+});
+Gmanager.addMessageListener("deleteNotes", function(msg) {
+    //Get array of EWS #s then loop through deleting them all
+    var guy_path = pathBase + "guy_log.txt";
+    var guy_ws_log = readText(guy_path);
+    if (guy_ws_log !== null) {
+        var guy_log = guy_ws_log.split(",");
+    }
+    for (var h=0; h < guy_log.length; h++) {
+        var ewsfile = OS.Path.join(UproFile, guy_log[h] + ".txt")
+        OS.File.remove(ewsfile);
+    }
+    console.log("Stored EWS notes removed.");
 });
 Gmanager.addMessageListener("SaveNote", function(msg) {
     let myFile = getLocalDirectory();
@@ -118,6 +166,19 @@ Smanager.addMessageListener("GetNote", function(msg) {
         Smanager.sendAsyncMessage("SetNote", notearray);
     }
 });
+Smanager.addMessageListener("deleteNotes", function(msg) {
+    //Get array of EWS #s then loop through deleting them all
+    var scott_path = pathBase + "scott_log.txt";
+    var scott_ws_log = readText(scott_path);
+    if (scott_ws_log !== null) {
+        var scott_log = scott_ws_log.split(",");
+    }
+    for (var h=0; h < scott_log.length; h++) {
+        var ewsfile = OS.Path.join(UproFile, scott_log[h] + ".txt")
+        OS.File.remove(ewsfile);
+    }
+    console.log("Stored EWS notes removed.");
+});
 Smanager.addMessageListener("SaveNote", function(msg) {
     let myFile = getLocalDirectory();
     myFile.append(msg.data[0] + ".txt"); 
@@ -157,6 +218,19 @@ Pmanager.addMessageListener("GetNote", function(msg) {
         var notearray = new Array(notedata, msg.data);
         Pmanager.sendAsyncMessage("SetNote", notearray);
     }
+});
+Pmanager.addMessageListener("deleteNotes", function(msg) {
+    //Get array of EWS #s then loop through deleting them all
+    var paul_path = pathBase + "paul_log.txt";
+    var paul_ws_log = readText(paul_path);
+    if (paul_ws_log !== null) {
+        var paul_log = paul_ws_log.split(",");
+    }
+    for (var h=0; h < paul_log.length; h++) {
+        var ewsfile = OS.Path.join(UproFile, paul_log[h] + ".txt")
+        OS.File.remove(ewsfile);
+    }
+    console.log("Stored EWS notes removed.");
 });
 Pmanager.addMessageListener("SaveNote", function(msg) {
     let myFile = getLocalDirectory();
@@ -198,6 +272,19 @@ Hmanager.addMessageListener("GetNote", function(msg) {
         Hmanager.sendAsyncMessage("SetNote", notearray);
     }
 });
+Hmanager.addMessageListener("deleteNotes", function(msg) {
+    //Get array of EWS #s then loop through deleting them all
+    var suzhou_path = pathBase + "suzhou_log.txt";
+    var suzhou_ws_log = readText(suzhou_path);
+    if (suzhou_ws_log !== null) {
+        var suzhou_log = suzhou_ws_log.split(",");
+    }
+    for (var h=0; h < suzhou_log.length; h++) {
+        var ewsfile = OS.Path.join(UproFile, suzhou_log[h] + ".txt")
+        OS.File.remove(ewsfile);
+    }
+    console.log("Stored EWS notes removed.");
+});
 Hmanager.addMessageListener("SaveNote", function(msg) {
     let myFile = getLocalDirectory();
     myFile.append(msg.data[0] + ".txt"); 
@@ -232,7 +319,7 @@ Hmanager.addMessageListener("SaveSizes", function(msg) {
 // Preferences
 var prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
 
-//Create empty logfiles if they do not exist
+//Create empty logfiles if they do not exist (for notes)
 dfCHK(OS.Path.join(UproFile, "scott.txt"));
 dfCHK(OS.Path.join(UproFile, "paul.txt"));
 dfCHK(OS.Path.join(UproFile, "suzhou.txt"));
@@ -272,7 +359,7 @@ function checkTabs(text) {
     var g;
     for (g=0;g<tabs.length;g++) {
         var meHere = String(tabs[g].url);
-        if (meHere.contains(text, 0) == true) {
+        if (meHere.includes(text, 0) == true) {
             console.log("User tab already open");
             return g;
         } else {
@@ -720,7 +807,7 @@ function dfCHK(thename){
     var promiseA = OS.File.writeAtomic(thename, "", { tmpPath: thename + '.tmp' });
     promiseA.then(
         function(aVal) {
-            console.log('successfully created file');
+            //console.log('successfully created file');
         },
         function(aReason) {
             console.log('writeAtomic failed for reason:', aReason);
@@ -761,7 +848,9 @@ function readText(thename){
     textReader.close();
     return str;
 }
+
 function Write_data(name, data){
+    var deferred = defer();
     let encoder = new TextEncoder();                                // This encoder can be reused for several writes
     if (data.length !== 0) {
         let array = encoder.encode(data);
@@ -778,6 +867,7 @@ function Write_data(name, data){
     //   yield file.close(); 
     //   console.log("Data written to", name);
     //}).then(null, function(e) console.error(e));
+    return deferred.promise;
 }
 
 function getLocalDirectory () { 

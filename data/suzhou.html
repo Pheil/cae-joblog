@@ -15,7 +15,7 @@ function saveNotetoFile(theid) {
     sendAsyncMessage("SaveNote", datapackage);
 }
 
-function clearAllSS() {
+function clearAll() {
     var array = new Array("suzhou", "");
     sendAsyncMessage("deleteNotes", array);
     console.log("Stored EWS notes cleared.");
@@ -40,7 +40,7 @@ function clearSizes(user) {
     <div class="container"><button id="reload" title="Refresh widget data" class="rel_but">Update Page</button></div>
     <div class="container"><button id="delete" title="Delete ALL user widget notes and sizes" class="del_but">Delete Notes</button></div>
     <div class="container"><button id="clearSize" title="Reset widget dimensions and locations" class="cs_but">Reset Sizes</button></div>
-    <script type="text/javascript" src="resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-3.0.0.pre.js"></script>
+    <script type="text/javascript" src="resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-ui.min.js"></script>
     <script type="text/javascript" src="resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery.gridster.js" charset="utf-8"></script>
 
@@ -132,27 +132,26 @@ function clearSizes(user) {
                 sendAsyncMessage("GetNote", thewidgets[h]);
             } 
         }
-        //Reload when button pressed
-        var works = document.getElementById("reload");
-        works.addEventListener("click", function() {
-            gridster.remove_all_widgets();
-            init();
-            location.reload();
-      }, false);
-        //getNoteStart();
     }
-
-        //Delete when button pressed
-        var clearSS = document.getElementById("delete");
-        clearSS.addEventListener("click", function() {
-            clearAllSS();
-        }, false);
-        
-        //Reset sizes when button pressed
-        var clearSize = document.getElementById("clearSize");
-        clearSize.addEventListener("click", function() {
-            clearSizes("_h");
-        }, false);
+    //Reload when button pressed
+    var works = document.getElementById("reload");
+    works.addEventListener("click", function() {
+        gridster.remove_all_widgets();
+        init();
+        location.reload();
+    }, false);
+  
+    //Delete when button pressed
+    var clearSS = document.getElementById("delete");
+    clearSS.addEventListener("click", function() {
+        clearAll();
+    }, false);
+    
+    //Reset sizes when button pressed
+    var clearSize = document.getElementById("clearSize");
+    clearSize.addEventListener("click", function() {
+        clearSizes("_h");
+    }, false);
     
     $(window).load(function() {
         window.setTimeout(init, 100);

@@ -3,7 +3,9 @@ var scottTotal = 0;
 var guyTotal = 0;
 var suzhouTotal = 0;
 var ews_array = [];
+var fullUrl =    "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No"
 
+//This function is not currently called
 function UpdateMaster(ews_array, owner_array) {
     var all_array = JSON.stringify({
         ews: ews_array,
