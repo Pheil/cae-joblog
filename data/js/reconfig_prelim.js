@@ -1,15 +1,8 @@
 function refreshInformation(output) {
-//var paulTotal = 0;
-//var scottTotal = 0;
-//var guyTotal = 0;
-//var suzhouTotal = 0;
-//var ews_array = [];
   //function infoReceived()
   //{
     //var output = httpRequest.responseText;
     //if (output) {
-      //ORIG Reconfig code
-      
       
     // Remove date picker script
     var script = output.getElementsByTagName('script')[0];
@@ -85,7 +78,6 @@ function refreshInformation(output) {
             table_b.deleteRow(row); 
         }
     }
-    
 
     //Delete column
     function del_column(col_no) {
@@ -139,55 +131,67 @@ function refreshInformation(output) {
             }
         }
     }
+    
+    //Add thead tag for column sorting
+    var theTABLE = output.getElementsByTagName('table')[0];
+    var thead = theTABLE.createTHead();
+    var row = theTABLE.rows[0];
+    thead.appendChild(row);
+    //var parentDiv = heading.parentNode;
+    //console.log(thead);
+    //parentDiv.replaceChild(thead, heading);
+    
 
     //Move table to DIV
     var center = output.createElement('center');
     var div_Table = output.createElement('div');
     div_Table.setAttribute('id', 'otherContent');
-    var theTABLE = output.getElementsByTagName('table')[0];
     div_Table.appendChild(theTABLE);
     center.appendChild(div_Table);
     output.body.appendChild(center);
     var tables = output.getElementById('thetable');
     
-//Send values to update button
-//var assignTotal = paulTotal + guyTotal + scottTotal + suzhouTotal;
-var allTotal = tables.rows.length-1;
-var unassignTotal = allTotal;
-//self.port.emit("badge", unassignTotal);
+    //Add basic tags, add css & meta tags, reconfig_final
+    var html = output.createElement('html');
+    var head = output.createElement('head');
+    var link1 = output.createElement('link');
+        link1.setAttribute('rel', 'stylesheet');
+        link1.setAttribute('type', 'text/css');
+        link1.setAttribute('href', 'resource://CAEJobLog-at-tenneco-dot-com/data/css/jquery-ui.css');
+    var link2 = output.createElement('link');
+        link2.setAttribute('rel', 'stylesheet');
+        link2.setAttribute('type', 'text/css');
+        link2.setAttribute('href', 'resource://CAEJobLog-at-tenneco-dot-com/data/css/style.css');
+    var meta = output.createElement('meta');
+        meta.setAttribute('http-equiv', 'Content-Type');
+        meta.setAttribute('content', 'text/html; charset=ISO-8859-1');
+    var scr1 = output.createElement('script'); 
+        scr1.setAttribute('type', 'text/javascript');
+        scr1.setAttribute('src', 'resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-2.1.3.js');
+    var scr2 = output.createElement('script');
+        scr2.setAttribute('type', 'text/javascript');
+        scr2.setAttribute('src', 'resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery.tablesorter.js');
+    head.appendChild(link1);
+    head.appendChild(link2);
+    head.appendChild(meta);
+    head.appendChild(scr1);
+    head.appendChild(scr2);
+    html.appendChild(head);
+    var body = output.createElement('body');
+    //var datatable = output.getElementById('otherContent').innerHTML;
+        body.appendChild(tables);
+    var scr3 = output.createElement('script');
+        scr3.setAttribute('language', 'JavaScript');
+        scr3.setAttribute('src', 'resource://CAEJobLog-at-tenneco-dot-com/data/js/reconfig_final.js');
+    body.appendChild(scr3);
+    html.appendChild(body);
 
-//Send data to index.js
-var tabledata = output.getElementById('otherContent').innerHTML;
-//self.port.emit('loaded', tabledata);
-return tabledata;
+    //Send data to index.js
+    //var tabledata = output.getElementById('otherContent').innerHTML;
+    //var tabledata = output.getElementsByTagName('html').innerHTML;
+    var tabledata = output.getElementsByTagName('html')[0].innerHTML
+    //console.log(html.innerHTML);
+    //self.port.emit('loaded', tabledata);
+    return html.innerHTML;
       
-      
-      //orig reconfig code
-      //postMessage(output.trim());
-    //}
-    //httpRequest = null;
-  //}
-
-  //var httpRequest = new XMLHttpRequest();
-  //httpRequest.open("GET", fullUrl, true);
-  //httpRequest.onload = infoReceived;
-  //httpRequest.send(null);
 }
-
-//setInterval(function() {
-//  refreshInformation();
-//}, 30*60*1000); //30 minutes
-
-//onmessage = function(event) {
-//  refreshInformation();
-//}
-
-//Not called anywhere, yet?
-//function UpdateMaster(ews_array, owner_array) {
-//    var all_array = JSON.stringify({
-//        ews: ews_array,
-//        owner: owner_array
-//    });
-//    self.port.emit("save", all_array);
-//}
-

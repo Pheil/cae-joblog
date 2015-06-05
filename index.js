@@ -2,6 +2,7 @@
 const pageMod = require("sdk/page-mod");
 const Request = require("sdk/request").Request;
 const tabs = require("sdk/tabs");
+const tab_utils = require("sdk/tabs/utils");
 const panels = require("sdk/panel");
 const self = require("sdk/self");
 const ss = require("sdk/simple-storage");
@@ -42,7 +43,7 @@ function updateJobs(){
         loader.loadSubScript(url);
     }
     //loadScript("resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-3.0.0.pre.js");
-    loadScript("resource://CAEJobLog-at-tenneco-dot-com/data/js/reconfig_BG2.js");
+    loadScript("resource://CAEJobLog-at-tenneco-dot-com/data/js/reconfig_prelim.js");
     
     let hiddenFrame = hiddenFrames.add(hiddenFrames.HiddenFrame({
       onReady: function() {
@@ -98,17 +99,202 @@ function updateJobs(){
 
 //FF39 required
 Cu.import("resource://gre/modules/RemotePageManager.jsm");
+let CAEmanager = new RemotePages("about:caejobs");
 let Gmanager = new RemotePages("about:guy");
 let Smanager = new RemotePages("about:scott");
 let Pmanager = new RemotePages("about:paul");
 let Hmanager = new RemotePages("about:suzhou");
+
+// Communication with about:caejobs
+//update page data
+CAEmanager.addMessageListener("reloadx", function() {
+    updateJobs();
+    //Signal to reload page (move inside update func?)
+    CAEmanager.sendAsyncMessage("pageready");
+});
+
+//update badge
+CAEmanager.addMessageListener("badge", function(state) {
+    var num = state.data[0];
+    cae_button.badge = num;
+    cae_button.badgeColor = "#AA00AA";
+});
+
+//update master
+CAEmanager.addMessageListener("save", function(all_array) {
+    //console.log(all_array);
+    //var parsedall_array = JSON.parse(all_array);
+    //var ews_array = parsedall_array.ews;
+    var ews_array = all_array.data[0];
+    //var owner_array = parsedall_array.owner;
+    var owner_array = all_array.data[1];
+                
+    // Save ews list
+    var ews_path = pathBase + "ews_log.txt";
+    Write_data(ews_path, ews_array);
+    
+    // Update owner log vs user logs (already logged EWS)
+    var user;
+    for (var j=0; j < users.length; j++) {
+        var browserWindow = utils.getMostRecentBrowserWindow();
+        var window = browserWindow.content;
+        user = users[j];
+        window[user + '_path'] = pathBase + user + "_log.txt";
+        window[user + '_log'] = [];
+        window[user + '_log_str'] = readText(window[user + '_path']);
+        if (window[user + '_log_str'] !== null || window[user + '_log_str'] !== "") {
+            window[user + '_log'] = window[user + '_log_str'].split(",");
+            var curArray = window[user + '_log'];
+            var old_length = curArray.length;
+            for (var i=0; i < window[user + '_log'].length; i++) {
+                window[user + '_chk'] = window[user + '_log'][i];
+                var location = ews_array.indexOf(window[user + '_chk']);        // Check for match in EWS list
+                if (location > -1) {
+                    //console.log("RECORD FOUND " + location + " - " + window[user + '_chk']);
+                    owner_array[location] = user;                               // Match found so assign
+                } else if (location == -1) {
+                    console.error("User record not found: " + window[user + '_chk']);
+                    window[user + '_log'].splice(window[user + '_log'].indexOf(window[user + '_chk']), 1);    // Not found so remove from User log
+                }
+            }
+            if (window[user + '_log'].length !== old_length) {
+                Write_data(window[user + '_path'], window[user + '_log']);      //Array changed so update file
+                console.log("User log updated [" + old_length + " -> " + window[user + '_log'].length + "]");
+            }
+        }
+    }
+    var owner_path = pathBase + "owner_log.txt";
+    Write_data(owner_path, owner_array);
+});
+
+//save data
+CAEmanager.addMessageListener("update", function(upChange) {
+    var ews = upChange.data[0];
+    var owner = upChange.data[1];
+    //var parsedupChange = JSON.parse(upChange);
+    //var ews = parsedupChange.ews;
+    //var owner = parsedupChange.owner;
+    var log_path = pathBase + owner + "_log.txt";
+    var log = [];
+    // Read current log
+    var log_str = readText(log_path);
+    if (log_str !== null && log_str !== "") {
+        log = log_str.split(",");
+        // Add new record to log
+        log.push(ews);
+    }
+    if (log_str === null || log_str === "") {
+        // Add new record to log
+        log[0] = ews;
+    }
+
+    Write_data(log_path, log);
+    console.log(ews + " assigned to " + owner + ".");
+    //Update Badge
+    var curtotal = cae_button.badge;
+    cae_button.badge = curtotal-1;
+    cae_button.badgeColor = "#00aa00";
+});
+
+//unassign
+CAEmanager.addMessageListener("unassign", function(upChange) {
+    // Unassign changed record
+    //var parsedupChange = JSON.parse(upChange);
+    //var ews = parsedupChange.ews;
+    //var owner = parsedupChange.owner;
+    var ews = upChange.data[0];
+    var owner = upChange.data[1];
+    //console.log("CHECK 1 " + ews);
+    //console.log("CHECK 2 " + owner);
+    if (owner != "none") {
+        //Retrieve log
+        var user_path = pathBase + owner + "_log.txt";
+        var user_log = readText(user_path);
+        user_log = user_log.split(",");
+        //Remove from log
+        user_log.splice(user_log.indexOf(ews), 1);
+        //Save new log
+        Write_data(user_path, user_log);
+        //Log change
+        console.log(ews + " unassigned from " + owner + ".");
+        
+        //Send owner to remove value from
+        //worker.port.emit("unassignNum", owner);
+        CAEmanager.sendAsyncMessage("unassignNum", owner);
+        //Update Badge
+        var curtotal = cae_button.badge;
+        cae_button.badge = curtotal+1;
+        cae_button.badgeColor = "#aa00aa";
+    }
+});
+
+//guy log
+CAEmanager.addMessageListener("rtn_logged_g", function(username) {
+    // Send user log to content script when requested
+    var browserWindow = utils.getMostRecentBrowserWindow();
+    var window = browserWindow.content;
+    var user = username.data;
+    var guy_path = pathBase + user + "_log.txt";
+    var guy_log_str = readText(guy_path);
+    var guy_log = "";
+    if (guy_log_str !== null) {
+        guy_log = guy_log_str.split(",");
+    }
+    CAEmanager.sendAsyncMessage("userLog_g", guy_log);
+});
+
+//paul log
+CAEmanager.addMessageListener("rtn_logged_p", function(username) {
+    // Send user log to content script when requested
+    var browserWindow = utils.getMostRecentBrowserWindow();
+    var window = browserWindow.content;
+    var user = username.data;
+    var paul_path = pathBase + user + "_log.txt";
+    var paul_log_str = readText(paul_path);
+    var paul_log = "";
+    if (paul_log_str !== null) {
+        paul_log = paul_log_str.split(",");
+    }
+    CAEmanager.sendAsyncMessage("userLog_p", paul_log);
+});
+
+//scott log
+CAEmanager.addMessageListener("rtn_logged_s", function(username) {
+    // Send user log to content script when requested
+    var browserWindow = utils.getMostRecentBrowserWindow();
+    var window = browserWindow.content;
+    var user = username.data;
+    var scott_path = pathBase + user + "_log.txt";
+    var scott_log_str = readText(scott_path);
+    var scott_log = "";
+    if (scott_log_str !== null) {
+        scott_log = scott_log_str.split(",");
+    }
+    CAEmanager.sendAsyncMessage("userLog_s", scott_log);
+});
+
+//suzhou log
+CAEmanager.addMessageListener("rtn_logged_h", function(username) {
+    // Send user log to content script when requested
+    var browserWindow = utils.getMostRecentBrowserWindow();
+    var window = browserWindow.content;
+    var user = username.data;
+    var suzhou_path = pathBase + user + "_log.txt";
+    var suzhou_log_str = readText(suzhou_path);
+    var suzhou_log = "";
+    if (suzhou_log_str !== null) {
+        suzhou_log = suzhou_log_str.split(",");
+    }
+    CAEmanager.sendAsyncMessage("userLog_h", suzhou_log);
+});
+
 
 // Communication with about:guy
 Gmanager.addMessageListener("GetNote", function(msg) {
     let myFile = getLocalDirectory();
     myFile = myFile.path + "\\" + msg.data + ".txt";
     if (file.exists(myFile) === true ) {
-        var notedata = readText(myFile)
+        var notedata = readText(myFile);
         var notearray = new Array(notedata, msg.data);
         Gmanager.sendAsyncMessage("SetNote", notearray);
     }
@@ -117,11 +303,12 @@ Gmanager.addMessageListener("deleteNotes", function(msg) {
     //Get array of EWS #s then loop through deleting them all
     var guy_path = pathBase + "guy_log.txt";
     var guy_ws_log = readText(guy_path);
+    var guy_log = "";
     if (guy_ws_log !== null) {
-        var guy_log = guy_ws_log.split(",");
+        guy_log = guy_ws_log.split(",");
     }
     for (var h=0; h < guy_log.length; h++) {
-        var ewsfile = OS.Path.join(UproFile, guy_log[h] + ".txt")
+        var ewsfile = OS.Path.join(UproFile, guy_log[h] + ".txt");
         OS.File.remove(ewsfile);
     }
     console.log("Stored EWS notes removed.");
@@ -156,12 +343,30 @@ Gmanager.addMessageListener("SaveSizes", function(msg) {
             return; 
     });
 });
+Gmanager.addMessageListener("rtn_logged", function(username) {
+    // Send user logs to content script when requested
+    var user = username.data;
+    var guy_path = pathBase + user + "_log.txt";
+    var guy_log_str = readText(guy_path);
+    var guy_log = "";
+    if (guy_log_str !== null) {
+        guy_log = guy_log_str.split(",");
+    }
+    // For widgets
+    var filepath = OS.Path.join(UproFile, user + ".txt");
+    var guy_path2 = filepath;
+    var guyws_log = readText(guy_path2);
+    //Send user ews log & widget arrays
+    var array = new Array(guyws_log, guy_log);
+    Gmanager.sendAsyncMessage("userLog", array);
+});
+
 // Communication with about:scott
 Smanager.addMessageListener("GetNote", function(msg) {
     let myFile = getLocalDirectory();
     myFile = myFile.path + "\\" + msg.data + ".txt";
     if (file.exists(myFile) === true ) {
-        var notedata = readText(myFile)
+        var notedata = readText(myFile);
         var notearray = new Array(notedata, msg.data);
         Smanager.sendAsyncMessage("SetNote", notearray);
     }
@@ -170,11 +375,12 @@ Smanager.addMessageListener("deleteNotes", function(msg) {
     //Get array of EWS #s then loop through deleting them all
     var scott_path = pathBase + "scott_log.txt";
     var scott_ws_log = readText(scott_path);
+    var scott_log = "";
     if (scott_ws_log !== null) {
-        var scott_log = scott_ws_log.split(",");
+        scott_log = scott_ws_log.split(",");
     }
     for (var h=0; h < scott_log.length; h++) {
-        var ewsfile = OS.Path.join(UproFile, scott_log[h] + ".txt")
+        var ewsfile = OS.Path.join(UproFile, scott_log[h] + ".txt");
         OS.File.remove(ewsfile);
     }
     console.log("Stored EWS notes removed.");
@@ -209,12 +415,30 @@ Smanager.addMessageListener("SaveSizes", function(msg) {
             return; 
     });
 });
+Smanager.addMessageListener("rtn_logged", function(username) {
+    // Send user logs to content script when requested
+    var user = username.data;
+    var scott_path = pathBase + user + "_log.txt";
+    var scott_log_str = readText(scott_path);
+    var scott_log = "";
+    if (scott_log_str !== null) {
+        scott_log = scott_log_str.split(",");
+    }
+    // For widgets
+    var filepath = OS.Path.join(UproFile, user + ".txt");
+    var scott_path2 = filepath;
+    var scottws_log = readText(scott_path2);
+    //Send user ews log & widget arrays
+    var array = new Array(scottws_log, scott_log);
+    Smanager.sendAsyncMessage("userLog", array);
+});
+
 // Communication with about:paul
 Pmanager.addMessageListener("GetNote", function(msg) {
     let myFile = getLocalDirectory();
     myFile = myFile.path + "\\" + msg.data + ".txt";
     if (file.exists(myFile) === true ) {
-        var notedata = readText(myFile)
+        var notedata = readText(myFile);
         var notearray = new Array(notedata, msg.data);
         Pmanager.sendAsyncMessage("SetNote", notearray);
     }
@@ -223,11 +447,12 @@ Pmanager.addMessageListener("deleteNotes", function(msg) {
     //Get array of EWS #s then loop through deleting them all
     var paul_path = pathBase + "paul_log.txt";
     var paul_ws_log = readText(paul_path);
+    var paul_log = "";
     if (paul_ws_log !== null) {
-        var paul_log = paul_ws_log.split(",");
+        paul_log = paul_ws_log.split(",");
     }
     for (var h=0; h < paul_log.length; h++) {
-        var ewsfile = OS.Path.join(UproFile, paul_log[h] + ".txt")
+        var ewsfile = OS.Path.join(UproFile, paul_log[h] + ".txt");
         OS.File.remove(ewsfile);
     }
     console.log("Stored EWS notes removed.");
@@ -262,12 +487,30 @@ Pmanager.addMessageListener("SaveSizes", function(msg) {
             return; 
     });
 });
+Pmanager.addMessageListener("rtn_logged", function(username) {
+    // Send user logs to content script when requested
+    var user = username.data;
+    var paul_path = pathBase + user + "_log.txt";
+    var paul_log_str = readText(paul_path);
+    var paul_log = "";
+    if (paul_log_str !== null) {
+        paul_log = paul_log_str.split(",");
+    }
+    // For widgets
+    var filepath = OS.Path.join(UproFile, user + ".txt");
+    var paul_path2 = filepath;
+    var paulws_log = readText(paul_path2);
+    //Send user ews log & widget arrays
+    var array = new Array(paulws_log, paul_log);
+    Pmanager.sendAsyncMessage("userLog", array);
+});
+
 // Communication with about:suzhou
 Hmanager.addMessageListener("GetNote", function(msg) {
     let myFile = getLocalDirectory();
     myFile = myFile.path + "\\" + msg.data + ".txt";
     if (file.exists(myFile) === true ) {
-        var notedata = readText(myFile)
+        var notedata = readText(myFile);
         var notearray = new Array(notedata, msg.data);
         Hmanager.sendAsyncMessage("SetNote", notearray);
     }
@@ -276,11 +519,12 @@ Hmanager.addMessageListener("deleteNotes", function(msg) {
     //Get array of EWS #s then loop through deleting them all
     var suzhou_path = pathBase + "suzhou_log.txt";
     var suzhou_ws_log = readText(suzhou_path);
+    var suzhou_log = "";
     if (suzhou_ws_log !== null) {
-        var suzhou_log = suzhou_ws_log.split(",");
+        suzhou_log = suzhou_ws_log.split(",");
     }
     for (var h=0; h < suzhou_log.length; h++) {
-        var ewsfile = OS.Path.join(UproFile, suzhou_log[h] + ".txt")
+        var ewsfile = OS.Path.join(UproFile, suzhou_log[h] + ".txt");
         OS.File.remove(ewsfile);
     }
     console.log("Stored EWS notes removed.");
@@ -314,6 +558,23 @@ Hmanager.addMessageListener("SaveSizes", function(msg) {
         if (!components.isSuccessCode(status))  
             return; 
     });
+});
+Hmanager.addMessageListener("rtn_logged", function(username) {
+    // Send user logs to content script when requested
+    var user = username.data;
+    var suzhou_path = pathBase + user + "_log.txt";
+    var suzhou_log_str = readText(suzhou_path);
+    var suzhou_log = "";
+    if (suzhou_log_str !== null) {
+        suzhou_log = suzhou_log_str.split(",");
+    }
+    // For widgets
+    var filepath = OS.Path.join(UproFile, user + ".txt");
+    var suzhou_path2 = filepath;
+    var suzhouws_log = readText(suzhou_path2);
+    //Send user ews log & widget arrays
+    var array = new Array(suzhouws_log, suzhou_log);
+    Hmanager.sendAsyncMessage("userLog", array);
 });
 
 // Preferences
@@ -355,20 +616,6 @@ var cae_panel = panels.Panel({
     contentScript: myScript
 });
 
-function checkTabs(text) {
-    var g;
-    for (g=0;g<tabs.length;g++) {
-        var meHere = String(tabs[g].url);
-        if (meHere.includes(text, 0) == true) {
-            console.log("User tab already open");
-            return g;
-        } else {
-            var theReturn = -1;
-        }
-        }
-     return theReturn;
-}
-
 cae_panel.port.on("click_link", function (text) {
     //tabs.open(self.data.url(text));
     //console.log(text);
@@ -376,9 +623,10 @@ cae_panel.port.on("click_link", function (text) {
         var clipboard = require("sdk/clipboard");
         clipboard.set("<script>var fileref=document.createElement('script');fileref.setAttribute('type','text/javascript');fileref.setAttribute('src', 'http://tamilan.na.ten/cae/EWS/ews.js');document.getElementsByTagName('head')[0].appendChild(fileref);</script><p><a class='iframe' id='caer' href='http://tamilan.na.ten/cae/EWS/viewer.htm'>View Results</a></p>");
     }
+//http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL
     else if (text == "assign") {
         tabs.open({
-            url: "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL",
+            url: "about:caejobs",
             isPinned: true,
             inNewWindow: false,
             inBackground: false
@@ -401,19 +649,20 @@ cae_panel.port.on("click_link", function (text) {
         });
     }
     else {
-            var isTab = checkTabs("about:" + text);
-            //let url = tabs.activeTab.url;
-            if (isTab == -1) {
+        //Disabled checking if tab is open already until multiprocess compatible method is used
+            //var isTab = tab_utils.isTabOpen("about:" + text);
+            //if (isTab == false) {
                     tabs.open({
                         url: "about:" + text,
                         isPinned: true,
                         inNewWindow: false,
                         inBackground: false
                     });
-            } else {
-                tabs[isTab].activate();
-                tabs[isTab].reload();
-            }
+            //} else {
+            //    var tabID = tab_utils.getTabId("about:" + text);
+            //    tabs[tabID].activate();
+            //    tabs[tabID].reload();
+            //}
     } 
     handleHide();
 });
@@ -457,8 +706,8 @@ pageMod.PageMod({
     include: /http.*ece_ewo_web.ece_ewo_metric_report.*CAEJL.*/,
     contentScriptWhen: 'ready',
     contentScriptFile: [
-        "./js/jquery-2.1.3.min.js",
-        "./js/jquery-ui.min.js",
+        "./js/jquery-2.1.3.js",
+        "./js/jquery-ui.js",
         "./js/button.js",
         "./js/reconfig.js"
     ],
@@ -543,10 +792,10 @@ pageMod.PageMod({
             var parsedupChange = JSON.parse(upChange);
             var ews = parsedupChange.ews;
             var owner = parsedupChange.owner;
-            var path = pathBase + owner + "_log.txt";
+            var log_path = pathBase + owner + "_log.txt";
             var log = [];
             // Read current log
-            var log_str = readText(path);
+            var log_str = readText(log_path);
             if (log_str !== null && log_str !== "") {
                 log = log_str.split(",");
                 // Add new record to log
@@ -557,10 +806,10 @@ pageMod.PageMod({
                 log[0] = ews;
             }
 
-            Write_data(path, log);
+            Write_data(log_path, log);
             console.log(ews + " assigned to " + owner + ".");
             //Update Badge
-            var curtotal = cae_button.badge
+            var curtotal = cae_button.badge;
             cae_button.badge = curtotal-1;
             cae_button.badgeColor = "#00aa00";
         });
@@ -683,7 +932,7 @@ pageMod.PageMod({
                 //Send owner to remove value from;
                 worker.port.emit("unassignNum", owner);
             //Update Badge
-            var curtotal = cae_button.badge
+            var curtotal = cae_button.badge;
             cae_button.badge = curtotal+1;
             cae_button.badgeColor = "#aa00aa";
             }
@@ -691,8 +940,57 @@ pageMod.PageMod({
     }
 });
 
-// Create a page mod - GUY
+// Page mod for EWS pages
 pageMod.PageMod({
+    include: "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=EWS*",
+    contentScriptWhen: 'end',
+    contentScriptFile: './js/ews_user.js',
+    onAttach: function(worker) {
+        // Send user logs to content script when requested
+        var browserWindow = utils.getMostRecentBrowserWindow();
+        var window = browserWindow.content;
+        worker.port.once("rtn_logged", function() {
+            var g_path = pathBase + "guy_log.txt";
+            var g_log_str = readText(g_path);
+            var g_log = "";
+            if (g_log_str !== null) {
+                g_log = g_log_str.split(",");
+            }
+            var s_path = pathBase + "scott_log.txt";
+            var s_log_str = readText(s_path);
+            var s_log = "";
+            if (s_log_str !== null) {
+                s_log = s_log_str.split(",");
+            }
+            var p_path = pathBase + "paul_log.txt";
+            var p_log_str = readText(p_path);
+            var p_log = "";
+            if (p_log_str !== null) {
+                p_log = p_log_str.split(",");
+            }
+            var h_path = pathBase + "suzhou_log.txt";
+            var h_log_str = readText(h_path);
+            var h_log = "";
+            if (h_log_str !== null) {
+                h_log = h_log_str.split(",");
+            }
+            //Send user ews logs as arrays
+            var array = new Array(g_log, s_log, p_log, h_log);
+            worker.port.emit("userLogs", array);
+        });
+    }
+});
+
+// Page mod for CAEJobs page
+//pageMod.PageMod({
+//    include: "about:caejobs",
+//    contentScriptWhen: 'end',
+//    contentScriptFile: './js/reconfig_final.js',
+//});
+
+// Page mods replaced with RemotePageManager
+// Create a page mod - GUY
+/* pageMod.PageMod({
     include: "about:guy",
     contentScriptWhen: 'start',
     contentScriptFile: './js/guy.js',
@@ -717,89 +1015,7 @@ pageMod.PageMod({
             worker.port.emit("userLogHTML_g", array);
         });
     }
-});
-// Create a page mod - SCOTT
-pageMod.PageMod({
-    include: "about:scott",
-    contentScriptWhen: 'start',
-    contentScriptFile: './js/scott.js',
-    onAttach: function(worker) {
-        // Send user log to content script when requested
-        var browserWindow = utils.getMostRecentBrowserWindow();
-        var window = browserWindow.content;
-        var user;
-        worker.port.once("rtnHTML_logged_s", function(user) {
-            window[user + '_path'] = pathBase + user + "_log.txt";
-            window[user + '_log_str'] = readText(window[user + '_path']);
-            window[user + '_log'] = "";
-            if (window[user + '_log_str'] !== null) {
-                window[user + '_log'] = window[user + '_log_str'].split(",");
-            }
-            // For widgets
-            var filepath = OS.Path.join(UproFile, user + ".txt");
-            window[user + '_path'] = filepath;
-            window[user + 'ws_log'] = readText(window[user + '_path']);
-            //Send user ews log array & widget array
-            var array = new Array(window[user + 'ws_log'], window[user + '_log']);
-            worker.port.emit("userLogHTML_s", array);
-        });
-    }
-});
-// Create a page mod - PAUL
-pageMod.PageMod({
-    include: "about:paul",
-    contentScriptWhen: 'start',
-    contentScriptFile: './js/paul.js',
-    onAttach: function(worker) {
-        // Send user log to content script when requested
-        var browserWindow = utils.getMostRecentBrowserWindow();
-        var window = browserWindow.content;
-        var user;
-        worker.port.once("rtnHTML_logged_p", function(user) {
-            //console.log(user + " recieved.");
-            window[user + '_path'] = pathBase + user + "_log.txt";
-            window[user + '_log_str'] = readText(window[user + '_path']);
-            window[user + '_log'] = "";
-            if (window[user + '_log_str'] !== null) {
-                window[user + '_log'] = window[user + '_log_str'].split(",");
-            }
-            // For widgets
-            var filepath = OS.Path.join(UproFile, user + ".txt");
-            window[user + '_path'] = filepath;
-            window[user + 'ws_log'] = readText(window[user + '_path']);
-            //Send user ews log array & widget array
-            var array = new Array(window[user + 'ws_log'], window[user + '_log']);
-            worker.port.emit("userLogHTML_p", array);
-        });
-    }
-});
-// Create a page mod - Suzhou
-pageMod.PageMod({
-    include: "about:suzhou",
-    contentScriptWhen: 'start',
-    contentScriptFile: './js/suzhou.js',
-    onAttach: function(worker) {
-        // Send user log to content script when requested
-        var browserWindow = utils.getMostRecentBrowserWindow();
-        var window = browserWindow.content;
-        var user;
-        worker.port.once("rtnHTML_logged_h", function(user) {
-            window[user + '_path'] = pathBase + user + "_log.txt";
-            window[user + '_log_str'] = readText(window[user + '_path']);
-            window[user + '_log'] = "";
-            if (window[user + '_log_str'] !== null) {
-                window[user + '_log'] = window[user + '_log_str'].split(",");
-            }
-            // For widgets
-            var filepath = OS.Path.join(UproFile, user + ".txt");
-            window[user + '_path'] = filepath;
-            window[user + 'ws_log'] = readText(window[user + '_path']);
-            //Send user ews log array & widget array
-            var array = new Array(window[user + 'ws_log'], window[user + '_log']);
-            worker.port.emit("userLogHTML_h", array);
-        });
-    }
-});
+}); */
 
 function dfCHK(thename){
     //Create CAE directory and empty file if they don't exist
@@ -817,7 +1033,7 @@ function dfCHK(thename){
 
 function readText(thename){
     if(!file.exists(thename)){
-        console.log("Log missing!");
+        console.log("Log missing! (" + thename + ")");
         return null;
     }
     let promise = OS.File.stat(thename);
@@ -898,10 +1114,14 @@ const aboutSuzhouContract = "@mozilla.org/network/protocol/about;1?what=suzhou";
 const aboutSuzhouDescription = "About Suzhou";
 const aboutSuzhouUUID = components.ID("b4c22652-df83-11e4-8830-0800200c9a66");
 
+const aboutCAEJobsContract = "@mozilla.org/network/protocol/about;1?what=caejobs";
+const aboutCAEJobsDescription = "About CAE Jobs";
+const aboutCAEJobsUUID = components.ID("bf031960-0ac3-11e5-b939-0800200c9a66");
+
 // about:paul factory
 let aboutPaulFactory = {
     createInstance: function(outer, iid) {
-        if (outer != null)
+        if (outer !== null)
             throw Cr.NS_ERROR_NO_AGGREGATION;
 
         return aboutPaul.QueryInterface(iid);
@@ -924,14 +1144,13 @@ let aboutPaul = {
         return Services.io.newChannelFromURI(uri);
     }
 };
-
 Cm.QueryInterface(Ci.nsIComponentRegistrar).
 registerFactory(aboutPaulUUID, aboutPaulDescription, aboutPaulContract, aboutPaulFactory);
 
 // about:guy factory
 let aboutGuyFactory = {
     createInstance: function(outer, iid) {
-        if (outer != null)
+        if (outer !== null)
             throw Cr.NS_ERROR_NO_AGGREGATION;
 
         return aboutGuy.QueryInterface(iid);
@@ -954,14 +1173,13 @@ let aboutGuy = {
         return Services.io.newChannelFromURI(uri);
     }
 };
-
 Cm.QueryInterface(Ci.nsIComponentRegistrar).
 registerFactory(aboutGuyUUID, aboutGuyDescription, aboutGuyContract, aboutGuyFactory);
 
 // about:scott factory
 let aboutScottFactory = {
     createInstance: function(outer, iid) {
-        if (outer != null)
+        if (outer !== null)
             throw Cr.NS_ERROR_NO_AGGREGATION;
 
         return aboutScott.QueryInterface(iid);
@@ -984,14 +1202,13 @@ let aboutScott = {
         return Services.io.newChannelFromURI(uri);
     }
 };
-
 Cm.QueryInterface(Ci.nsIComponentRegistrar).
 registerFactory(aboutScottUUID, aboutScottDescription, aboutScottContract, aboutScottFactory);
 
 // about:suzhou factory
 let aboutSuzhouFactory = {
     createInstance: function(outer, iid) {
-        if (outer != null)
+        if (outer !== null)
             throw Cr.NS_ERROR_NO_AGGREGATION;
 
         return aboutSuzhou.QueryInterface(iid);
@@ -1014,6 +1231,33 @@ let aboutSuzhou = {
         return Services.io.newChannelFromURI(uri);
     }
 };
-
 Cm.QueryInterface(Ci.nsIComponentRegistrar).
 registerFactory(aboutSuzhouUUID, aboutSuzhouDescription, aboutSuzhouContract, aboutSuzhouFactory);
+
+// about:caejobs factory
+let aboutCAEJobsFactory = {
+    createInstance: function(outer, iid) {
+        if (outer !== null)
+            throw Cr.NS_ERROR_NO_AGGREGATION;
+
+        return aboutCAEJobs.QueryInterface(iid);
+    }
+};
+
+// about:caejobs
+let aboutCAEJobs = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+
+    getURIFlags: function(aURI) {
+        return Ci.nsIAboutModule.ALLOW_SCRIPT;
+    },
+
+    newChannel: function(aURI) {
+        if (aURI.spec != "about:caejobs")
+            return;
+        let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/caejobs.html", null, null);
+        return Services.io.newChannelFromURI(uri);
+    }
+};
+Cm.QueryInterface(Ci.nsIComponentRegistrar).
+registerFactory(aboutCAEJobsUUID, aboutCAEJobsDescription, aboutCAEJobsContract, aboutCAEJobsFactory);

@@ -104,24 +104,42 @@
  a:hover   { color: #00c }  /* user hovers     */
  a:active  { color: #ccc }  /* active links    */
 table {
- width:40%;
- border-collapse:collapse;
- margin:0px;
+    width:75%;
+    font-size: 8pt;
+    font-family:arial;
+    background-color: #e6EEEE;
+    border-collapse:collapse;
+    margin:10px 0pt 15px;
 }
-td {
- border-style:none;
- font-size:14px ! important;
- border-bottom:1px solid #ccc;
- padding:2px 5px;
+.header {
+	background-image: url(images/bg.gif);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
 }
-th {
- font-size:18px;
- font-weight:bold;
- background-color:#808080;
- color:#ffffff;
- border-bottom:4px solid #000000;
- padding:8px 8px;
+.headerSortUp {
+	background-image: url(images/asc.gif);
+	background-repeat: no-repeat;
 }
+.headerSortDown {
+	background-image: url(images/desc.gif);
+	background-repeat: no-repeat;
+}
+thead tr th, table.tablesorter tfoot tr th {
+	background-color: #e6EEEE;
+	border: 1px solid #000;
+	font-size: 8pt;
+	padding: 4px;
+}
+thead tr .headerSortDown, thead tr .headerSortUp {
+    background-color: #8dbdd8;
+}
+tbody td {
+	color: #000000;
+	padding: 4px;
+	vertical-align: top;
+}
+
 /* tbody tr:hover td {
  color:#00F;
  background-color:#00FFFF;

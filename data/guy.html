@@ -7,28 +7,6 @@
   <link rel="stylesheet" type="text/css" href="resource://CAEJobLog-at-tenneco-dot-com/data/css/jquery-ui.css">
   <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <link width="16px" height="16px" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8%2F9hAAAAB3RJTUUH3wQdDyMo%2BA%2B1fgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAARnQU1BAACxjwv8YQUAAAPBSURBVHjaZZNtTFtlFMef29v23tv29uXStbelhb4NZCwMuk1GVDJiYiZsVdI5Pyx84QPRmPhhmpjhdO6b2UyW4BL9olEXNp3CnPKy8SILQ1Zw62ghZaWj0MqEXnpL327f7m0rJZJMPcnzPOfJOf%2BT38l5Hgj8x1iWFU7fn2v79RfvW1x%2BD0RHUNW9uaK5rUW8eL679pRKJVp9Nh969uJ2e1%2BfmHhkGx1LHJUpLcVeH2KyWrCwrkywpZfxQmY1HLS3aj%2Bv1OOO%2FxXweJaburu%2F%2B9K7pKpEVPv5x9rULoEchWpN0kfVeuSeTiV0XL8bf9%2F9ONLwnn3PuZq98omSjl%2FaaDqmvHFj5DiKqpB91rowpyHyVQc0M6dbpN2IAMqUciLpommgQNiRMjTe9dXTH9dDTLNGLfbwaDqq6%2BsbOzc7639lcEpW1beJmFmlDO58ir87FACf7BIGMuD5ERKQrE6EwTpN2uFJ2ncILl7sverzUeXptBBrPKgNUVpUlCcIGKghuD0JPviZioNDAv%2FdW9nkG4CQgNsA6G1ayRPXWqrB49tq5UciKUE6zaHT07zyV%2B3oIl%2BJMfOQsEKNg4JIBPLnY9w7LY6xk3TmD%2BlrgRCDsQUAZYtqWEtmRiefO8vHMEE0EsnUGoxSplKH%2BA06BOjkICUUg%2ByG47b0ce8V%2FdeOKUOe42CGYYBYvB3IZkv0%2B63NHWG%2BRqMIGQyxUCIJiWLRTJlIwSZmOM7MpJbQwIUzvPzyYknEWSwW717bmxWE9UVMEvgrNjvYDww65QyvubnuViaTFwwNBvX0ZrTM5YnXHREyy%2BjEDztiAEHAarV%2B0dnZeeKjM2c7vsFeYmOq9hXzyxfWO06f6uHX1BjdTU2mB8FgQskrhorj0zipVvvSid8HctuYQlJTHn7745MQbmQvrz28%2BbCXlS0Fc1AVTuYyNLV1gk8Q8tVr14aoxkbtPB1eJ0VRGFwfFhgFQW%2B%2B1OjhIw2xlHqhPRqp3xzv%2F80ycvXb6n8mK9peR%2BGSd%2BnSp8zCwvJBBYGGjWQiV61Awn7%2FfXkuG%2BfjOMHDxB8yA1O12nxcKKkxaiFeIVYIBgNwLpfb4JUKmEz6ya4u22c4juWczj%2BV3%2FfO7lPIKnYI3HNzsvk7%2FdKV8ScyZV6xZjvWdkUiEQV2Hxi86%2FT0XF4dHv5poL5eu4qiUR0ulbBUaE3BJLd41LoLe%2BFAhD7UAMVXVpxKj8djpigK2ZaF%2FvUbd21jI2xwOhdb3W5Xu8v14PDk5ChG07SQ47ideOlEURSQJOn8G5XGoGFq1srRAAAAAElFTkSuQmCC" rel="shortcut icon">
-<script>
-function saveNotetoFile(theid) {
-    var note = document.getElementById(theid).value;
-    var ewsnum = "EWS" + theid.replace(/\D/g,'');
-    var datapackage = new Array(ewsnum, note);
-    sendAsyncMessage("SaveNote", datapackage);
-}
-
-function clearAll() {
-    var array = new Array("guy", "");
-    sendAsyncMessage("deleteNotes", array);
-    console.log("Stored EWS notes cleared.");
-    location.reload();
-}
-
-function clearSizes(user) {
-    //Sends empty string to 'clear' sizes
-    var sizearray = new Array("guy", "");
-    sendAsyncMessage("SaveSizes", sizearray);
-    location.reload();
-}
-</script>
 </head>
 <body>
     <h1>Guy Smith</h1>
@@ -37,126 +15,12 @@ function clearSizes(user) {
     <div class="gridster">
         <ul></ul>
     </div>
-    <div class="container"><button id="reload" title="Refresh widget data" class="rel_but">Update Page</button></div>
+    <div class="container"><button id="reload" title="Refresh widget data" class="rel_but">Reload Page</button></div>
     <div class="container"><button id="delete" title="Delete ALL user widget notes and sizes" class="del_but">Delete Notes</button></div>
     <div class="container"><button id="clearSize" title="Reset widget dimensions and locations" class="cs_but">Reset Sizes</button></div>
-    <script type="text/javascript" src="resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-2.1.3.js"></script>
+    <script type="text/javascript" src="resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-ui.js"></script>
     <script type="text/javascript" src="resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery.gridster.js" charset="utf-8"></script>
-
-<script>
-    $( ".rel_but" ).button({ icons: {primary:'ui-icon-arrowrefresh-1-w'} });
-    $( ".del_but" ).button({ icons: {primary:'ui-icon-trash'},text:false });
-    $( ".cs_but" ).button({ icons: {primary:'ui-icon-transferthick-e-w'} });
-</script>
-    <script type="text/javascript" id="code">
-    var gridster;
-
-    $(function(){
-
-      gridster = $(".gridster > ul").gridster({
-          widget_margins: [10, 10],
-          widget_base_dimensions: [100, 55],
-          helper: 'clone',
-          resize: {
-            enabled: true,
-            stop: function(e, ui, $widget) {
-                var s = gridster.serialize();
-                var s2 = JSON.stringify(s);
-                //Save sizes
-                var sizearray = new Array("guy", s2);
-                sendAsyncMessage("SaveSizes", sizearray);
-            }
-          }
-      }).data('gridster');
-      
-        $('.gridster').on('click', function() {
-            var s = gridster.serialize();
-            var s2 = JSON.stringify(s);
-            try {
-                //Save sizes
-                var sizearray = new Array("guy", s2);
-                sendAsyncMessage("SaveSizes", sizearray);
-            } catch (e) {
-                console.error(e + " Error");
-            }
-        });
-    });
-    </script>
-    <script>
-    function init() {
-        addMessageListener("SetNote", function(msg) {
-            var notearray = msg.data;
-            var ews = notearray[1];
-            var message = notearray[0];
-            var note = document.getElementById(ews + '_note');
-            note.value = message;
-        }); 
-
-        var thewidgets = clonedContentScriptObject.thewidgets;
-        var serArray = clonedContentScriptObject.theserial;
-        //Check if assigned job qty has changed 
-        //First check if it's ever been set
-        if (serArray !== "") {
-            var serArray = JSON.parse(serArray);
-            //Then check if the length has changed
-            if (thewidgets.length != serArray.length) {
-                //Qty changed so clear widget location data
-                clearSizes("_g");
-            }
-            //Qty not changed
-            else {
-                for (var h=0; h < thewidgets.length; h++) {
-                    if (serArray) {
-                        var c = serArray[h].col;
-                        var r = serArray[h].row;
-                        var x = serArray[h].size_x;
-                        var y = serArray[h].size_y;
-                        gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNotetoFile(this.id);"></textarea></li>', x, y, c, r);
-                        //Request note and add
-                        sendAsyncMessage("GetNote", thewidgets[h]);
-                    }
-                    else {
-                        gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNotetoFile(this.id);"></textarea></li>', 2, 2);
-                        //Request note and add
-                        sendAsyncMessage("GetNote", thewidgets[h]);
-                    }
-                }
-            }
-        }
-        //Not set so just add widgets
-        else {
-            for (var i=0; i < thewidgets.length; i++) {
-                gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[i] + '>' + thewidgets[i] + '</a><BR><textarea id="' + thewidgets[i] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNotetoFile(this.id);"></textarea></li>', 2, 2);
-                //Request note and add
-                sendAsyncMessage("GetNote", thewidgets[i]);
-            } 
-        }
-        //getNoteStart();
-    }
-    //Reload when button pressed
-    var works = document.getElementById("reload");
-    works.addEventListener("click", function() {
-        gridster.remove_all_widgets();
-        init();
-        location.reload();
-    }, false);
-    
-    //Delete when button pressed
-    var clearSS = document.getElementById("delete");
-    clearSS.addEventListener("click", function() {
-        clearAll();
-    }, false);
-    
-    //Reset sizes when button pressed
-    var clearSize = document.getElementById("clearSize");
-    clearSize.addEventListener("click", function() {
-        clearSizes("_g");
-    }, false);
-    
-    $(window).load(function() {
-        window.setTimeout(init, 100);
-    });
-    </script>
+    <script type="text/javascript" src="resource://CAEJobLog-at-tenneco-dot-com/data/js/joblog_guy.js"></script>
 </body>
 </html>
