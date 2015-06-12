@@ -166,8 +166,8 @@ function modB(){
     //Create reload button div
     var div_reload = document.createElement('div');
         div_reload.setAttribute('class', 'container2');
-        var siteurl = "about:caejobs";
-        div_reload.innerHTML = "<a href='javascript:history.go(0)' class='rel_but ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary' id='button' target='_top'><span class='ui-button-icon-primary ui-icon ui-icon-arrowrefresh-1-w relo'></span><span class='ui-button-text'>Update</span></a>"; 
+        //var siteurl = "about:caejobs";
+        div_reload.innerHTML = "<a class='rel_but ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary' id='button'><span class='ui-button-icon-primary ui-icon ui-icon-arrowrefresh-1-w relo'></span><span class='ui-button-text'>Update</span></a>"; 
 
 // Appends all of the divs into the body  
     div.appendChild(div_gi);
@@ -358,7 +358,7 @@ function modB(){
         return false;
     }
     
-    var tables = document.getElementById('thetable');
+var tables = document.getElementById('thetable');
 // Compare current EWS list to user logged list and highlight if already assigned
 // Unassigns if dCHK is equal to non-breaking space (IE the job is marked as complete)
     sendAsyncMessage("rtn_logged_g", "guy");
@@ -498,14 +498,15 @@ function modB(){
         div_sum2.innerHTML = tables.rows.length-1;
         
         //Send values to update button
-            var assignTotal = div_suma + div_sumb + div_sumc + div_sumd;
-            var allTotal = tables.rows.length-1;
-            var unassignTotal = allTotal - assignTotal;
-            sendAsyncMessage("badge", unassignTotal);
+        var assignTotal = div_suma + div_sumb + div_sumc + div_sumd;
+        var allTotal = tables.rows.length-1;
+        var unassignTotal = allTotal - assignTotal;
+        sendAsyncMessage("badge", unassignTotal);
         
         div_sum.appendChild(div_sum2);
         var div_hx = document.getElementById('suzhou_div');
         div_hx.setAttribute('title', suzhouTotal + ' Jobs Assigned');
+        tablesort();
     });
     
 }    
@@ -528,11 +529,8 @@ function UpdateMaster(ews_array, owner_array) {
     var upChange = new Array(ews_array, owner_array);
     sendAsyncMessage("save", upChange);
 }
-    
-//modA();
-modB();
  
-
+function tablesort() {
 // add parser through the tablesorter addParser method 
     $.tablesorter.addParser({ 
         // set a unique id 
@@ -564,7 +562,17 @@ modB();
         }, 
         format: function(s) { 
             // format your data for normalization 
-            return s.toLowerCase().replace(/guy/,6).replace(/scott/,5).replace(/paul/,4).replace(/suzhou/,3).replace(/none/,2).replace(/n\/a/,1);  
+            var g = /guy/i;
+            var sc = /scott/i;
+            var p = /paul/i;
+            var h = /suzhou/i;
+            var n = /none/i;
+            var nn = /n\/a/i;
+            var str = s.toString().toLowerCase();
+            //console.log(str);
+            var users = str.replace(g,1).replace(sc,2).replace(p,3).replace(h,4).replace(n,5).replace(nn,6); 
+            return users;
+ 
         }, 
         // set type, either numeric or text 
         type: 'numeric' 
@@ -584,7 +592,16 @@ modB();
             debug: false
         }); 
     });
-    
+} 
+
+modB();
+
+//Reload button
+var works = document.getElementById("button");
+works.addEventListener("click", function() {
+     sendAsyncMessage("reloadx");
+     
+}, false);
 
     addMessageListener("unassignNum", function(owner) {
         var username = owner.data;
@@ -595,4 +612,8 @@ modB();
         count.innerHTML = count_value;
         var newTitle = document.getElementById(username.toLowerCase() + '_div');
         newTitle.setAttribute('title', count_value + ' Jobs Assigned');
+    });
+    
+    addMessageListener("pageready", function() {
+       location.reload();
     });

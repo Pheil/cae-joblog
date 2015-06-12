@@ -5,6 +5,7 @@ const tabs = require("sdk/tabs");
 const tab_utils = require("sdk/tabs/utils");
 const panels = require("sdk/panel");
 const self = require("sdk/self");
+const data = require('sdk/self').data;
 const ss = require("sdk/simple-storage");
 const file = require("sdk/io/file");
 const path = require('sdk/fs/path');
@@ -30,7 +31,6 @@ const { OS, TextEncoder, TextDecoder } = Cu.import("resource://gre/modules/osfil
 
 const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
 const UproFile = OS.Path.join(OS.Constants.Path.profileDir, "CAEwidgets");
-
 var myIconURL = self.data.url("./icon-16.png");
 
 function updateJobs(){
@@ -50,7 +50,6 @@ function updateJobs(){
         this.element.contentWindow.location = "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No";
         let self = this;
         this.element.addEventListener("DOMContentLoaded", function() {
-            //Need way to send reconfig code
             //console.log(self.element.contentDocument.title);
             var datadump = refreshInformation(self.element.contentDocument);
 
@@ -69,32 +68,64 @@ function updateJobs(){
             }
             var patha = pathBase + "index.html";
             //var writePromise = Write_data(patha, datadump);
-            timeout(Write_data(patha, datadump), 20).then(function(data) {
-              ui.display(data);
+            timeout(Write_data(patha, datadump), 200).then(function(data) {
+                //Open file in tab?
+                //ui.display(data);
+                //Close old log, copy, then open new log
+                //CAEmanager.sendAsyncMessage("pageready");
+                
             }, function() {
-                //Seems to fire regarless of status
+                //Seems to fire regardless of status
                 //notifications.notify({
                 //    title: "CAE Job Log",
                 //    text: "Network is being too slow, try again later",
                 //    iconURL: myIconURL
                 //});
             });
-            tabs.open({
-                url: pathBase + "index.html",
-                isPinned: false,
-                inNewWindow: false,
-                inBackground: false
-            });
+            //tabs.open({
+            //    url: pathBase + "index.html",
+            //    isPinned: false,
+            //    inNewWindow: false,
+            //    inBackground: false
+            //});
+            CAEmanagerUpdate();
             hiddenFrames.remove(hiddenFrame);
 
         }, true, true);
-            //notifications.notify({
-            //    title: "CAE Job Log",
-            //    text: "Job List Updated",
-            //    iconURL: myIconURL
-            //});
       }
-    }));    
+    }));  
+}
+
+function CAEmanagerUpdate(){
+    //Copy file to user directory
+    var patha = pathBase + "index.html";
+    var pathb = OS.Path.join(UproFile, "caejobs.html");
+    //let promise = OS.File.copy(patha, pathb);
+    //var fromPath = pathBase + "caejobs.blank";
+    //var toPath = OS.Path.join(UproFile, "caejobs.html");
+    var promise = OS.File.copy(patha, pathb);
+    promise.then(
+        function(aStat) {
+            //console.log('Copy blank caejobs Success');
+            //Re-open tab
+            //tabs.open({
+            //    url: "about:caejobs",
+            //    isPinned: true,
+            //    inNewWindow: false,
+            //    inBackground: false
+            //});
+            notifications.notify({
+                title: "CAE Job Log",
+                text: "Job List Updated",
+                iconURL: myIconURL
+            });
+            CAEmanager.sendAsyncMessage("pageready");
+        },
+        function(aReason) {
+            console.log('Copy blank caejobs failed, see console for details');
+            console.log('promise rejected', aReason);
+        }
+    );
 }
 
 //FF39 required
@@ -108,14 +139,21 @@ let Hmanager = new RemotePages("about:suzhou");
 // Communication with about:caejobs
 //update page data
 CAEmanager.addMessageListener("reloadx", function() {
+    //Reload instead of close???
+    //Close tab
+    //tabs.activeTab.close();
+    notifications.notify({
+        title: "CAE Job Log",
+        text: "Updated request submitted.",
+        iconURL: myIconURL
+    });
+    //Start process
     updateJobs();
-    //Signal to reload page (move inside update func?)
-    CAEmanager.sendAsyncMessage("pageready");
 });
 
 //update badge
 CAEmanager.addMessageListener("badge", function(state) {
-    var num = state.data[0];
+    var num = state.data;
     cae_button.badge = num;
     cae_button.badgeColor = "#AA00AA";
 });
@@ -192,8 +230,13 @@ CAEmanager.addMessageListener("update", function(upChange) {
     console.log(ews + " assigned to " + owner + ".");
     //Update Badge
     var curtotal = cae_button.badge;
-    cae_button.badge = curtotal-1;
-    cae_button.badgeColor = "#00aa00";
+    if (curtotal !== "") {
+        cae_button.badge = curtotal-1;
+        cae_button.badgeColor = "#00aa00";
+    } else {
+        cae_button.badge = -1;
+        cae_button.badgeColor = "#00aa00";
+    }
 });
 
 //unassign
@@ -585,6 +628,8 @@ dfCHK(OS.Path.join(UproFile, "scott.txt"));
 dfCHK(OS.Path.join(UproFile, "paul.txt"));
 dfCHK(OS.Path.join(UproFile, "suzhou.txt"));
 dfCHK(OS.Path.join(UproFile, "guy.txt"));
+dfCHK(OS.Path.join(UproFile, "caejobs.html"));
+// Blank caejobs file is copied from dfCHK function
 
 
 var cae_button = ToggleButton({
@@ -892,7 +937,7 @@ pageMod.PageMod({
         
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
-            context: [cm.SelectorContext("tr"), cm.URLContext("http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL*")],
+            context: [cm.SelectorContext("tr"), cm.URLContext("resource://CAEJobLog-at-tenneco-dot-com/data/caejobs.html")],
             image: self.data.url("./uEWS.png"),
             contentScript: 'self.on("click", function (node) {' +
                          '  console.log("Clicked: " + node.nodeName + " with ID: " + node.id);' +
@@ -982,13 +1027,65 @@ pageMod.PageMod({
 });
 
 // Page mod for CAEJobs page
-//pageMod.PageMod({
-//    include: "about:caejobs",
-//    contentScriptWhen: 'end',
-//    contentScriptFile: './js/reconfig_final.js',
-//});
+pageMod.PageMod({
+    include: "about:caejobs",
+    onAttach: function(worker) {
+        theWorkers.push(worker);
+        var cae_menuItem = cm.Item({
+            label: "Unassign EWS",
+            context: cm.SelectorContext("tr"),
+            image: self.data.url("./uEWS.png"),
+            contentScript: 'self.on("click", function (node) {' +
+                         '  var row = document.getElementById(node.id);' +
+                         '  var owner = row.cells[5].innerHTML;' +
+                         '  var ews = node.id;' +
+                         '  var upChange = JSON.stringify({' +
+                         '  ews: ews,' +
+                         '  owner: owner' +
+                         '  });' +
+                         '  self.postMessage(upChange);' +
+                         '  row.setAttribute("class", "dnd border-fade wobble-horizontal");' +
+                         '  row.setAttribute("style", "background:#FFFFFF;color:#000000;");' +
+                         '  row.cells[5].innerHTML = "None";' +
+                         '});',
+            onMessage: function (upChange) {
+                unassign(upChange);
+            }
+        });
 
-// Page mods replaced with RemotePageManager
+        function unassign(upChange) {
+            var parsedupChange = JSON.parse(upChange);
+            var ews = parsedupChange.ews;
+            var owner = parsedupChange.owner;
+            if (owner != "none") {
+                //Retrieve log
+                var user_path = pathBase + owner + "_log.txt";
+                var user_log = readText(user_path);
+                user_log = user_log.split(",");
+                //Remove from log
+                user_log.splice(user_log.indexOf(ews), 1);
+                //Save new log
+                Write_data(user_path, user_log);
+                //Log change
+                console.log(ews + " unassigned from " + owner + ".");
+                
+                //Send owner to remove value from;
+                worker.port.emit("unassignNum", owner);
+                //Update Badge
+                var curtotal = cae_button.badge;
+                if (curtotal !== "") {
+                    cae_button.badge = 1;
+                    cae_button.badgeColor = "#aa00aa";
+                } else {
+                    cae_button.badge = curtotal+1;
+                    cae_button.badgeColor = "#aa00aa";
+                }
+            }
+        }
+    }
+});
+
+// User Page mods replaced with RemotePageManager
 // Create a page mod - GUY
 /* pageMod.PageMod({
     include: "about:guy",
@@ -1018,15 +1115,29 @@ pageMod.PageMod({
 }); */
 
 function dfCHK(thename){
-    //Create CAE directory and empty file if they don't exist
+    //Create CAE directory and empty files if they don't exist
     OS.File.makeDir(UproFile);
     var promiseA = OS.File.writeAtomic(thename, "", { tmpPath: thename + '.tmp' });
     promiseA.then(
         function(aVal) {
-            //console.log('successfully created file');
+            //If caejobs then copy blank file
+            if (thename == OS.Path.join(UproFile, "caejobs.html")){
+                var fromPath = pathBase + "caejobs.blank";
+                //var toPath = OS.Path.join(UproFile, "caejobs.html");
+                var promise = OS.File.copy(fromPath, thename);
+                promise.then(
+                    function(aStat) {
+                        //console.log('Copy blank caejobs Success');
+                    },
+                    function(aReason) {
+                        console.log('Copy blank caejobs failed, see console for details');
+                        console.log('promise rejected', aReason);
+                    }
+                );
+            }
         },
         function(aReason) {
-            console.log('writeAtomic failed for reason:', aReason);
+            console.log('WriteAtomic failed for reason: ', aReason);
         }
     );
 }
@@ -1255,7 +1366,10 @@ let aboutCAEJobs = {
     newChannel: function(aURI) {
         if (aURI.spec != "about:caejobs")
             return;
-        let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/caejobs.html", null, null);
+        //var datafile = OS.Path.join(UproFile, "caejobs.html");
+        //var datafile = UproFile + "\\caejobs.html";
+        var datafile = OS.Path.toFileURI(OS.Path.join(UproFile, 'caejobs.html'));
+        let uri = Services.io.newURI(datafile, null, null);
         return Services.io.newChannelFromURI(uri);
     }
 };
