@@ -1,9 +1,4 @@
 function refreshInformation(output) {
-  //function infoReceived()
-  //{
-    //var output = httpRequest.responseText;
-    //if (output) {
-      
     // Remove date picker script
     var script = output.getElementsByTagName('script')[0];
     if (script) {
@@ -91,8 +86,6 @@ function refreshInformation(output) {
     del_column(5);
     del_column(1);
     
-    //var row=table_b.rows.length-1; row >= 0; row--
-    //var row=0; row<table_b.rows.length;row++
     //Delete if Cell = "NA"
     for (var row=table_b.rows.length-1; row >= 0; row--) {
         if(table_b.rows[row].cells[4].innerHTML == "NA"){
@@ -137,10 +130,6 @@ function refreshInformation(output) {
     var thead = theTABLE.createTHead();
     var row = theTABLE.rows[0];
     thead.appendChild(row);
-    //var parentDiv = heading.parentNode;
-    //console.log(thead);
-    //parentDiv.replaceChild(thead, heading);
-    
 
     //Move table to DIV
     var center = output.createElement('center');
@@ -187,11 +176,6 @@ function refreshInformation(output) {
     html.appendChild(body);
 
     //Send data to index.js
-    //var tabledata = output.getElementById('otherContent').innerHTML;
-    //var tabledata = output.getElementsByTagName('html').innerHTML;
     var tabledata = output.getElementsByTagName('html')[0].innerHTML
-    //console.log(html.innerHTML);
-    //self.port.emit('loaded', tabledata);
     return html.innerHTML;
-      
 }

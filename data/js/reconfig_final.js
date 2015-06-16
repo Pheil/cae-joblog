@@ -4,14 +4,7 @@ var guyTotal = 0;
 var suzhouTotal = 0;
 var ews_array = [];
 var mytable = document.getElementsByTagName('table')[0];
-
-//function modA() {
-    //var html = document.createElement('html');
-    //var head = document.createElement('head');
-    //html.appendChild(head);
-    //var body = document.createElement('body');
-    //html.appendChild(body);
-    
+   
     // Change page title
     document.title = "CAE job manager";
     var link = document.createElement('link');
@@ -32,12 +25,6 @@ var mytable = document.getElementsByTagName('table')[0];
     head.appendChild(link);
     
     for (var i = mytable.rows.length - 1; i >= 0; i--) {
-        //Add cell for assigned name
-        //if (i !== 0) {
-        //    //console.log(i);
-        //    tables.rows[i].insertCell(5);
-        //    tables.rows[i].cells[5].innerHTML = "None";  
-        //}
         var cae = mytable.rows[i].cells[4].innerHTML;
         var ews = mytable.rows[i].cells[0].textContent;
         //Add attributes
@@ -82,8 +69,6 @@ function modB(){
     center.appendChild(div_Table);
     document.body.appendChild(center);
     
-    //jQuery(document.getElementsByTagName('center')[0]).remove();
-
 //Add people icons html
 // Creates an html element 
     var div = document.createElement('div');    
@@ -259,10 +244,6 @@ function modB(){
         //If currently assigned to someone but not owner drop target
         var old_owner = row.cells[5].innerHTML.toLowerCase();
         if (old_owner != "none" && old_owner != owner) {
-            //var upChange = JSON.stringify({
-            //    ews: ews_value,
-            //    owner: old_owner
-            //});
             ews = new Array(ews);
             old_owner = new Array(old_owner);
             var upChange = new Array(ews, old_owner);
@@ -273,30 +254,18 @@ function modB(){
             if (owner == "guy") {
                 row.setAttribute('style', 'background:#0000FF;color:#008000;');
                 row.cells[5].innerHTML = "Guy";
-                //count = document.getElementById(owner + '_note');
-                //count_value =  parseInt(count.innerHTML) + 1;
-                //count.innerHTML = count_value;
             }
             if (owner == "suzhou") {
                 row.setAttribute('style', 'background:yellow;color:#008000;');
                 row.cells[5].innerHTML = "Suzhou";
-                //count = document.getElementById(owner + '_note');
-                //count_value =  parseInt(count.innerHTML) + 1;
-                //count.innerHTML = count_value;
             }
             if (owner == "paul") {
                 row.setAttribute('style', 'background:#FF9900;color:#008000;');
                 row.cells[5].innerHTML = "Paul";
-                //count = document.getElementById(owner + '_note');
-                //count_value =  parseInt(count.innerHTML) + 1;
-                //count.innerHTML = count_value;
             }
             if (owner == "scott") {
                 row.setAttribute('style', 'background:#33CC99;color:#008000;');
                 row.cells[5].innerHTML = "Scott";
-                //count = document.getElementById(owner + '_note');
-                //count_value =  parseInt(count.innerHTML) + 1;
-                //count.innerHTML = count_value;
             }
             //Fix total box value
             count = document.getElementById(owner + '_note');
@@ -313,30 +282,18 @@ function modB(){
             if (owner == "guy") {
                 row.setAttribute('style', 'background:#0000FF;color:#008000;');
                 row.cells[5].innerHTML = "Guy";
-                //count = document.getElementById(owner + '_note');
-                //count_value =  parseInt(count.innerHTML) + 1;
-                //count.innerHTML = count_value;
             }
             if (owner == "suzhou") {
                 row.setAttribute('style', 'background:yellow;color:#008000;');
                 row.cells[5].innerHTML = "Suzhou";
-                //count = document.getElementById(owner + '_note');
-                //count_value =  parseInt(count.innerHTML) + 1;
-                //count.innerHTML = count_value;
             }
             if (owner == "paul") {
                 row.setAttribute('style', 'background:#FF9900;color:#008000;');
                 row.cells[5].innerHTML = "Paul";
-                //count = document.getElementById(owner + '_note');
-                //count_value =  parseInt(count.innerHTML) + 1;
-                //count.innerHTML = count_value;
             }
             if (owner == "scott") {
                 row.setAttribute('style', 'background:#33CC99;color:#008000;');
                 row.cells[5].innerHTML = "Scott";
-                //count = document.getElementById(owner + '_note');
-                //count_value =  parseInt(count.innerHTML) + 1;
-                //count.innerHTML = count_value;
             }
             //Fix total box value
             count = document.getElementById(owner + '_note');
@@ -409,11 +366,8 @@ var tables = document.getElementById('thetable');
                         tables.rows[g].className+= " scott";
                         tables.rows[g].cells[5].innerHTML = "Scott";
                     }
-                    else { //Job has completed date so unassign
-                        //var upChange = JSON.stringify({
-                        //    ews: ews,
-                        //    owner: 'scott'
-                        //});
+                    else { 
+                        //Job has completed date so unassign
                         ews = new Array(ews);
                         var upChange = new Array(ews, 'scott');
                         unassign(upChange);
@@ -441,11 +395,8 @@ var tables = document.getElementById('thetable');
                         tables.rows[g].className+= " paul";
                         tables.rows[g].cells[5].innerHTML = "Paul";
                     }
-                    else { //Job has completed date so unassign
-                        //var upChange = JSON.stringify({
-                        //    ews: ews,
-                        //    owner: 'paul'
-                        //});
+                    else { 
+                        //Job has completed date so unassign
                         ews = new Array(ews);
                         var upChange = new Array(ews, 'paul');
                         unassign(upChange);
@@ -473,11 +424,8 @@ var tables = document.getElementById('thetable');
                         tables.rows[g].className+= " suzhou";
                         tables.rows[g].cells[5].innerHTML = "Suzhou";
                     }
-                    else { //Job has completed date so unassign
-                        //var upChange = JSON.stringify({
-                        //    ews: ews,
-                        //    owner: 'suzhou'
-                        //});
+                    else { 
+                        //Job has completed date so unassign
                         ews = new Array(ews);
                         var upChange = new Array(ews, 'suzhou');
                         unassign(upChange);
@@ -511,10 +459,6 @@ var tables = document.getElementById('thetable');
     
 }    
 function saveData(ews_value, owner) {
-    //var upChange = JSON.stringify({
-    //    ews: ews_value,
-    //    owner: owner
-    //});
     var upChange = new Array(ews_value, owner);
     sendAsyncMessage("update", upChange);
 }
@@ -522,10 +466,6 @@ function unassign(upChange) {
     sendAsyncMessage("unassign", upChange);
 }
 function UpdateMaster(ews_array, owner_array) {
-    //var all_array = JSON.stringify({
-    //    ews: ews_array,
-    //    owner: owner_array
-    //});
     var upChange = new Array(ews_array, owner_array);
     sendAsyncMessage("save", upChange);
 }
@@ -605,7 +545,6 @@ works.addEventListener("click", function() {
 
     addMessageListener("unassignNum", function(owner) {
         var username = owner.data;
-    //self.port.on("unassignNum", function (owner) {
         console.log(username + " (-1)");
         var count = document.getElementById(username.toLowerCase() + '_note');
         count_value =  parseInt(count.innerHTML) - 1;
