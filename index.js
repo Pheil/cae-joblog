@@ -10,6 +10,7 @@ const ss = require("sdk/simple-storage");
 const file = require("sdk/io/file");
 const path = require('sdk/fs/path');
 const cm = require("sdk/context-menu");
+var array = require('sdk/util/array');
 const { ToggleButton } = require("sdk/ui/button/toggle");
 const buttons = require('sdk/ui/button/action');
 //const pageWorker = require("sdk/page-worker");
@@ -32,6 +33,15 @@ const { OS, TextEncoder, TextDecoder } = Cu.import("resource://gre/modules/osfil
 const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
 const UproFile = OS.Path.join(OS.Constants.Path.profileDir, "CAEwidgets");
 var myIconURL = self.data.url("./icon-16.png");
+
+var _workers = [];
+
+function detachWorker(worker, _workers) {
+  var index = _workers.indexOf(worker);
+  if(index != -1) {
+    _workers.splice(index, 1);
+  }
+}
 
 function updateJobs(){
 //FF38 Required
@@ -715,15 +725,6 @@ cae_panel.port.on("click_link", function (text) {
 //Get previous EWS             '  console.log(node.previousElementSibling.id);' +
 //Get next EWS                 '  console.log(node.nextElementSibling.id);' +
 
-var theWorkers = [];
-
-function detachWorker(worker, workerArray) {
-  var index = workerArray.indexOf(worker);
-  if(index != -1) {
-    workerArray.splice(index, 1);
-  }
-}
-
 function handleChange(state) {
   //cae_button.badge = state.badge + 1;
   if (state.checked) {
@@ -1030,10 +1031,9 @@ pageMod.PageMod({
 pageMod.PageMod({
     include: "about:caejobs",
     onAttach: function(worker) {
-        theWorkers.push(worker);
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
-            context: cm.SelectorContext("tr"),
+            context: [cm.SelectorContext("tr"), cm.URLContext("about:caejobs")],
             image: self.data.url("./uEWS.png"),
             contentScript: 'self.on("click", function (node) {' +
                          '  var row = document.getElementById(node.id);' +
@@ -1051,6 +1051,11 @@ pageMod.PageMod({
             onMessage: function (upChange) {
                 unassign(upChange);
             }
+        });
+        
+        worker.on('detach', function () {
+            //detachWorker(this, _workers); //Doesn't work
+            cae_menuItem.destroy();
         });
 
         function unassign(upChange) {
@@ -1117,7 +1122,7 @@ pageMod.PageMod({
 function dfCHK(thename){
     //Create CAE directory and empty files if they don't exist
     OS.File.makeDir(UproFile);
-    var promiseA = OS.File.writeAtomic(thename, "", { tmpPath: thename + '.tmp' });
+    var promiseA = OS.File.writeAtomic(thename, "", { tmpPath: thename + '.tmp', noOverwrite: true });
     promiseA.then(
         function(aVal) {
             //If caejobs then copy blank file
@@ -1127,7 +1132,7 @@ function dfCHK(thename){
                 var promise = OS.File.copy(fromPath, thename);
                 promise.then(
                     function(aStat) {
-                        //console.log('Copy blank caejobs Success');
+                        console.log('Copy blank caejobs Success');
                     },
                     function(aReason) {
                         console.log('Copy blank caejobs failed, see console for details');
