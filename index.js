@@ -34,14 +34,37 @@ const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
 const UproFile = OS.Path.join(OS.Constants.Path.profileDir, "CAEwidgets");
 var myIconURL = self.data.url("./icon-16.png");
 
-var _workers = [];
+//Watch user log for updates (Job changes)
+var prefUser = "paul";
+var prefUlog = pathBase + prefUser + '_log.txt';
 
-function detachWorker(worker, _workers) {
-  var index = _workers.indexOf(worker);
-  if(index != -1) {
-    _workers.splice(index, 1);
-  }
-}
+/* var chokidar = require('chokidar');
+var watcher = chokidar.watch(prefUlog, {
+  ignored: /[\/\\]\./, persistent: true
+});
+
+var log = console.log.bind(console);
+
+watcher
+  .on('change', function(path) { log('File', path, 'has been changed'); })
+  .on('unlink', function(path) { log('File', path, 'has been removed'); })
+  .on('unlinkDir', function(path) { log('Directory', path, 'has been removed'); })
+  .on('error', function(error) { log('Error happened', error); })
+  .on('ready', function() { log('Initial scan complete. Ready for changes.'); })
+  .on('raw', function(event, path, details) { log('Raw event info:', event, path, details); })
+
+// 'add', 'addDir' and 'change' events also receive stat() results as second
+// argument when available: http://nodejs.org/api/fs.html#fs_class_fs_stats
+watcher.on('change', function(path, stats) {
+  if (stats) console.log('File', path, 'changed size to', stats.size);
+});
+
+// Un-watch some files.
+//watcher.unwatch('new-file*');
+
+// Only needed if watching is `persistent: true`.
+watcher.close(); */
+
 
 function updateJobs(){
 //FF38 Required
@@ -92,12 +115,6 @@ function updateJobs(){
                 //    iconURL: myIconURL
                 //});
             });
-            //tabs.open({
-            //    url: pathBase + "index.html",
-            //    isPinned: false,
-            //    inNewWindow: false,
-            //    inBackground: false
-            //});
             CAEmanagerUpdate();
             hiddenFrames.remove(hiddenFrame);
 
@@ -171,10 +188,7 @@ CAEmanager.addMessageListener("badge", function(state) {
 //update master
 CAEmanager.addMessageListener("save", function(all_array) {
     //console.log(all_array);
-    //var parsedall_array = JSON.parse(all_array);
-    //var ews_array = parsedall_array.ews;
     var ews_array = all_array.data[0];
-    //var owner_array = parsedall_array.owner;
     var owner_array = all_array.data[1];
                 
     // Save ews list
@@ -219,9 +233,6 @@ CAEmanager.addMessageListener("save", function(all_array) {
 CAEmanager.addMessageListener("update", function(upChange) {
     var ews = upChange.data[0];
     var owner = upChange.data[1];
-    //var parsedupChange = JSON.parse(upChange);
-    //var ews = parsedupChange.ews;
-    //var owner = parsedupChange.owner;
     var log_path = pathBase + owner + "_log.txt";
     var log = [];
     // Read current log
@@ -252,13 +263,8 @@ CAEmanager.addMessageListener("update", function(upChange) {
 //unassign
 CAEmanager.addMessageListener("unassign", function(upChange) {
     // Unassign changed record
-    //var parsedupChange = JSON.parse(upChange);
-    //var ews = parsedupChange.ews;
-    //var owner = parsedupChange.owner;
     var ews = upChange.data[0];
     var owner = upChange.data[1];
-    //console.log("CHECK 1 " + ews);
-    //console.log("CHECK 2 " + owner);
     if (owner != "none") {
         //Retrieve log
         var user_path = pathBase + owner + "_log.txt";
@@ -272,7 +278,6 @@ CAEmanager.addMessageListener("unassign", function(upChange) {
         console.log(ews + " unassigned from " + owner + ".");
         
         //Send owner to remove value from
-        //worker.port.emit("unassignNum", owner);
         CAEmanager.sendAsyncMessage("unassignNum", owner);
         //Update Badge
         var curtotal = cae_button.badge;
@@ -631,7 +636,7 @@ Hmanager.addMessageListener("rtn_logged", function(username) {
 });
 
 // Preferences
-var prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
+//var prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
 
 //Create empty logfiles if they do not exist (for notes)
 dfCHK(OS.Path.join(UproFile, "scott.txt"));
@@ -677,6 +682,11 @@ cae_panel.port.on("click_link", function (text) {
     if (text == "oracle") {
         var clipboard = require("sdk/clipboard");
         clipboard.set("<script>var fileref=document.createElement('script');fileref.setAttribute('type','text/javascript');fileref.setAttribute('src', 'http://tamilan.na.ten/cae/EWS/ews.js');document.getElementsByTagName('head')[0].appendChild(fileref);</script><p><a class='iframe' id='caer' href='http://tamilan.na.ten/cae/EWS/viewer.htm'>View Results</a></p>");
+        notifications.notify({
+            title: "CAE Job Log",
+            text: "Oracle code copied to clipboard.",
+            iconURL: myIconURL
+        });
     }
 //http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL
     else if (text == "assign") {
@@ -747,245 +757,6 @@ function handleHide() {
 //  tabs.open("http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL");
 //}
 
-// Create a page mod
-pageMod.PageMod({
-    include: /http.*ece_ewo_web.ece_ewo_metric_report.*CAEJL.*/,
-    contentScriptWhen: 'ready',
-    contentScriptFile: [
-        "./js/jquery-2.1.3.js",
-        "./js/jquery-ui.js",
-        "./js/button.js",
-        "./js/reconfig.js"
-    ],
-    contentStyleFile: [
-        "./css/jquery-ui.css",
-        "./css/style.css"
-    ],
-    onAttach: function(worker) {
-        theWorkers.push(worker);
-        var browserWindow = utils.getMostRecentBrowserWindow();
-        var window = browserWindow.content;
-        var oldInnerHTML = window.document.body.innerHTML;
-        //detach is broken
-       // worker.on('detach', function() {
-       //     detachWorker(this, theWorkers);
-       //     window.document.body.innerHTML = oldInnerHTML;
-       // });
-        // Update master log
-        worker.port.on("save", function(all_array) {
-            var parsedall_array = JSON.parse(all_array);
-            var ews_array = parsedall_array.ews;
-            var owner_array = parsedall_array.owner;
-                        
-            // Save ews list
-            var ews_path = pathBase + "ews_log.txt";
-            Write_data(ews_path, ews_array);
-            
-            // Update owner log vs user logs (already logged EWS)
-            var user;
-            for (var j=0; j < users.length; j++) {
-                user = users[j];
-                window[user + '_path'] = pathBase + user + "_log.txt";
-                window[user + '_log'] = [];
-                window[user + '_log_str'] = readText(window[user + '_path']);
-                if (window[user + '_log_str'] !== null || window[user + '_log_str'] !== "") {
-                    window[user + '_log'] = window[user + '_log_str'].split(",");
-                    var curArray = window[user + '_log'];
-                    var old_length = curArray.length;
-                    for (var i=0; i < window[user + '_log'].length; i++) {
-                        window[user + '_chk'] = window[user + '_log'][i];
-                        var location = ews_array.indexOf(window[user + '_chk']);        // Check for match in EWS list
-                        if (location > -1) {
-                            //console.log("RECORD FOUND " + location + " - " + window[user + '_chk']);
-                            owner_array[location] = user;                               // Match found so assign
-                        } else if (location == -1) {
-                            console.error("User record not found: " + window[user + '_chk']);
-                            window[user + '_log'].splice(window[user + '_log'].indexOf(window[user + '_chk']), 1);    // Not found so remove from User log
-                        }
-                    }
-                    if (window[user + '_log'].length !== old_length) {
-                        Write_data(window[user + '_path'], window[user + '_log']);      //Array changed so update file
-                        console.log("User log updated [" + old_length + " -> " + window[user + '_log'].length + "]");
-                    }
-                }
-            }
-            //Non-loop version
-                //var guy_path = pathBase + "guy_log.txt";
-                //var guy_log = [];
-                //var guy_log_str = readText(guy_path);
-                //if (guy_log_str !== null) {
-                //    guy_log = guy_log_str.split(",");
-                //    for (var i=0; i < guy_log.length; i++) {
-                //        var guy_chk = guy_log[i];
-                //        var location = ews_array.indexOf(guy_chk);       // Check for match in EWS list
-                //        if (location > -1) {
-                //            //console.log("(" + location + ") Match at " + i + " value of " + guy_chk);
-                //            owner_array[location] = "guy";                  // Match found so assign
-                //        } else if (location == -1) {
-                //            //console.log("No match " + i + " value of " + guy_chk);
-                //            guy_log.splice(guy_log.indexOf(guy_chk), 1);    // Not found so remove from Guy log
-                //        }
-                //    }
-                //}
-            //Write_data(window[user + '_path'], window[user + '_log']);
-
-            var owner_path = pathBase + "owner_log.txt";
-            Write_data(owner_path, owner_array);
-        });
-
-        // Assign changed record
-        worker.port.on("update", function(upChange) {
-            var parsedupChange = JSON.parse(upChange);
-            var ews = parsedupChange.ews;
-            var owner = parsedupChange.owner;
-            var log_path = pathBase + owner + "_log.txt";
-            var log = [];
-            // Read current log
-            var log_str = readText(log_path);
-            if (log_str !== null && log_str !== "") {
-                log = log_str.split(",");
-                // Add new record to log
-                log.push(ews);
-            }
-            if (log_str === null || log_str === "") {
-                // Add new record to log
-                log[0] = ews;
-            }
-
-            Write_data(log_path, log);
-            console.log(ews + " assigned to " + owner + ".");
-            //Update Badge
-            var curtotal = cae_button.badge;
-            cae_button.badge = curtotal-1;
-            cae_button.badgeColor = "#00aa00";
-        });
-        // Unassign changed record
-        worker.port.on("unassign", function(upChange) {
-            //var parsedupChange = JSON.parse(upChange);
-            //var ews = parsedupChange.ews;
-            //var owner = parsedupChange.owner;
-            //var path = pathBase + owner + "_log.txt";
-            //var log = [];
-            // Read current log
-            //var log_str = readText(path);
-            //if (log_str !== null && log_str !== "") {
-            //    log = log_str.split(",");
-                // Add new record to log
-            //    log.push(ews);
-            //}
-            //if (log_str === null || log_str === "") {
-                // Add new record to log
-            //    log[0] = ews;
-            //}
-            unassign(upChange);
-            //console.log(ews + " unassigned to " + owner + ".");
-        });
-        
-        worker.port.on("badge", function(state) {
-            cae_button.badge = state;
-            cae_button.badgeColor = "#AA00AA";
-        });
-
-        // Send user log to content script when requested
-        worker.port.once("rtn_logged_g", function(user) {
-            window[user + '_path'] = pathBase + user + "_log.txt";
-            window[user + '_log_str'] = readText(window[user + '_path']);
-            window[user + '_log'] = "";
-            if (window[user + '_log_str'] !== null) {
-                window[user + '_log'] = window[user + '_log_str'].split(",");
-            } else {
-                window[user + '_log'] = "";
-            }
-            //Send user log array
-            worker.port.emit("userLogEWS_g", window[user + '_log']);
-        });
-        worker.port.once("rtn_logged_s", function(user) {
-            window[user + '_path'] = pathBase + user + "_log.txt";
-            window[user + '_log_str'] = readText(window[user + '_path']);
-            window[user + '_log'] = "";
-            if (window[user + '_log_str'] !== null) {
-                window[user + '_log'] = window[user + '_log_str'].split(",");
-            } else {
-                window[user + '_log'] = "";
-            }
-            //Send user log array
-            worker.port.emit("userLogEWS_s", window[user + '_log']);
-        });
-        worker.port.once("rtn_logged_p", function(user) {
-            window[user + '_path'] = pathBase + user + "_log.txt";
-            window[user + '_log_str'] = readText(window[user + '_path']);
-            window[user + '_log'] = "";
-            if (window[user + '_log_str'] !== null) {
-                window[user + '_log'] = window[user + '_log_str'].split(",");
-            } else {
-                window[user + '_log'] = "";
-            }
-            //Send user log array
-            worker.port.emit("userLogEWS_p", window[user + '_log']);
-        });
-        worker.port.once("rtn_logged_h", function(user) {
-            window[user + '_path'] = pathBase + user + "_log.txt";
-            window[user + '_log_str'] = readText(window[user + '_path']);
-            window[user + '_log'] = "";
-            if (window[user + '_log_str'] !== null) {
-                window[user + '_log'] = window[user + '_log_str'].split(",");
-            } else {
-                window[user + '_log'] = "";
-            }
-            //Send user log array
-            worker.port.emit("userLogEWS_h", window[user + '_log']);
-        });
-        
-        var cae_menuItem = cm.Item({
-            label: "Unassign EWS",
-            context: [cm.SelectorContext("tr"), cm.URLContext("resource://CAEJobLog-at-tenneco-dot-com/data/caejobs.html")],
-            image: self.data.url("./uEWS.png"),
-            contentScript: 'self.on("click", function (node) {' +
-                         '  console.log("Clicked: " + node.nodeName + " with ID: " + node.id);' +
-                         '  var row = document.getElementById(node.id);' +
-                         '  var owner = row.cells[5].innerHTML;' +
-                         '  var ews = node.id;' +
-                         '  var upChange = JSON.stringify({' +
-                         '  ews: ews,' +
-                         '  owner: owner' +
-                         '  });' +
-                         '  self.postMessage(upChange);' +
-                         '  row.setAttribute("class", "dnd border-fade wobble-horizontal");' +
-                         '  row.setAttribute("style", "background:#FFFFFF;color:#000000;");' +
-                         '  row.cells[5].innerHTML = "None";' +
-                         '});',
-            onMessage: function (upChange) {
-                unassign(upChange);
-            }
-        });
-
-        function unassign(upChange) {
-            var parsedupChange = JSON.parse(upChange);
-            var ews = parsedupChange.ews;
-            var owner = parsedupChange.owner;
-            if (owner != "none") {
-                //Retrieve log
-                var user_path = pathBase + owner + "_log.txt";
-                var user_log = readText(user_path);
-                user_log = user_log.split(",");
-                //Remove from log
-                user_log.splice(user_log.indexOf(ews), 1);
-                //Save new log
-                Write_data(user_path, user_log);
-                //Log change
-                console.log(ews + " unassigned from " + owner + ".");
-                
-                //Send owner to remove value from;
-                worker.port.emit("unassignNum", owner);
-            //Update Badge
-            var curtotal = cae_button.badge;
-            cae_button.badge = curtotal+1;
-            cae_button.badgeColor = "#aa00aa";
-            }
-        }
-    }
-});
-
 // Page mod for EWS pages
 pageMod.PageMod({
     include: "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=EWS*",
@@ -993,8 +764,6 @@ pageMod.PageMod({
     contentScriptFile: './js/ews_user.js',
     onAttach: function(worker) {
         // Send user logs to content script when requested
-        var browserWindow = utils.getMostRecentBrowserWindow();
-        var window = browserWindow.content;
         worker.port.once("rtn_logged", function() {
             var g_path = pathBase + "guy_log.txt";
             var g_log_str = readText(g_path);
@@ -1024,6 +793,10 @@ pageMod.PageMod({
             var array = new Array(g_log, s_log, p_log, h_log);
             worker.port.emit("userLogs", array);
         });
+        //Restore original page
+        worker.on('detach', function () {
+            //Need multiprocess code
+        });
     }
 });
 
@@ -1045,7 +818,7 @@ pageMod.PageMod({
                          '  });' +
                          '  self.postMessage(upChange);' +
                          '  row.setAttribute("class", "dnd border-fade wobble-horizontal");' +
-                         '  row.setAttribute("style", "background:#FFFFFF;color:#000000;");' +
+                         '  row.setAttribute("style", "background-color:#E6EEEE;");' +
                          '  row.cells[5].innerHTML = "None";' +
                          '});',
             onMessage: function (upChange) {
@@ -1054,7 +827,6 @@ pageMod.PageMod({
         });
         
         worker.on('detach', function () {
-            //detachWorker(this, _workers); //Doesn't work
             cae_menuItem.destroy();
         });
 
@@ -1079,45 +851,16 @@ pageMod.PageMod({
                 //Update Badge
                 var curtotal = cae_button.badge;
                 if (curtotal !== "") {
-                    cae_button.badge = 1;
+                    cae_button.badge = curtotal+1;
                     cae_button.badgeColor = "#aa00aa";
                 } else {
-                    cae_button.badge = curtotal+1;
+                    cae_button.badge = 1;
                     cae_button.badgeColor = "#aa00aa";
                 }
             }
         }
     }
 });
-
-// User Page mods replaced with RemotePageManager
-// Create a page mod - GUY
-/* pageMod.PageMod({
-    include: "about:guy",
-    contentScriptWhen: 'start',
-    contentScriptFile: './js/guy.js',
-    onAttach: function(worker) {
-        // Send user logs to content script when requested
-        var browserWindow = utils.getMostRecentBrowserWindow();
-        var window = browserWindow.content;
-        var user;
-        worker.port.once("rtnHTML_logged_g", function(user) {
-            window[user + '_path'] = pathBase + user + "_log.txt";
-            window[user + '_log_str'] = readText(window[user + '_path']);
-            window[user + '_log'] = "";
-            if (window[user + '_log_str'] !== null) {
-                window[user + '_log'] = window[user + '_log_str'].split(",");
-            }
-            // For widgets
-            var filepath = OS.Path.join(UproFile, user + ".txt");
-            window[user + '_path'] = filepath;
-            window[user + 'ws_log'] = readText(window[user + '_path']);
-            //Send user ews log array & widget array
-            var array = new Array(window[user + 'ws_log'], window[user + '_log']);
-            worker.port.emit("userLogHTML_g", array);
-        });
-    }
-}); */
 
 function dfCHK(thename){
     //Create CAE directory and empty files if they don't exist
@@ -1190,15 +933,6 @@ function Write_data(name, data){
     } else {
         OS.File.writeAtomic(name, "", {tmpPath: name + ".tmp"});      // Write the array atomically to "file.txt", using as temporary buffer "file.txt.tmp".
     }
-    //var encoder = new TextEncoder();
-    //var mydata = encoder.encode(data);
-    //name = OS.Path.join(OS.Constants.Path.tmpDir, name);
-    //Task.spawn(function() {
-    //   let file = yield OS.File.open(name, {write: true, append: false});
-    //   yield file.write(mydata);
-    //   yield file.close(); 
-    //   console.log("Data written to", name);
-    //}).then(null, function(e) console.error(e));
     return deferred.promise;
 }
 

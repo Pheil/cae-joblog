@@ -4,6 +4,18 @@ var guyTotal = 0;
 var suzhouTotal = 0;
 var ews_array = [];
 var mytable = document.getElementsByTagName('table')[0];
+
+    // Fix EWS links
+    var links = document.getElementsByTagName("a");
+    for (var ti=0;ti<links.length;ti++) {
+       var thislinks = links[ti];
+       var test = thislinks.getAttribute("href");
+       //if (test == "ece_webquery.part_no_drawings?p_part_id=") {
+       //thislinks.removeAttribute("href");
+       //}
+       var test2 = "http://pafoap01:8888/pls/prod/" + test;
+       thislinks.setAttribute('href', test2);
+    }
    
     // Change page title
     document.title = "CAE job manager";

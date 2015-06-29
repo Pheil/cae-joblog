@@ -17,33 +17,33 @@
             //Compare array values to current EWS
             var assigned;
             if ( guy_ews.indexOf( ewsnumber2 ) > -1 ) {
-                assigned = 'guy'
+                assigned = 'Guy.'
             } else if ( scott_ews.indexOf( ewsnumber2 ) > -1 ) {
-                assigned = 'scott'
+                assigned = 'Scott.'
             } else if ( paul_ews.indexOf( ewsnumber2 ) > -1 ) {
-                assigned = 'paul'
+                assigned = 'Paul.'
             } else if ( suzhou_ews.indexOf( ewsnumber2 ) > -1 ) {
-                assigned = 'suzhou'
+                assigned = 'Suzhou.'
             } else {
-                assigned = ''
+                assigned = 'no one.'
             }
             
-            console.log("Current EWS is assigned to:  " + assigned);
+            console.log(ewsnumber2 + " is assigned to " + assigned);
 
             // Add assigned status
             var div = document.createElement('div');
             div.setAttribute('id', 'caeAssigned');
 
-            if (assigned == 'guy') {
+            if (assigned == 'Guy.') {
                 var elmNewContent = document.createTextNode('CAE Job Log:  Assigned to Guy');
                 div.setAttribute('style', 'position:absolute;top: 0;left: 0;right: 0;background:rgba(0, 0, 255, 0.5);margin: 0;width: 100%;height: 22px;text-align:center;border: 1px solid black;');
-            } else if (assigned == 'scott') {
+            } else if (assigned == 'Scott.') {
                 var elmNewContent = document.createTextNode('CAE Job Log:  Assigned to Scott');
                 div.setAttribute('style', 'position:absolute;top: 0;left: 0;right: 0;background:rgba(51, 204, 153, 0.5);margin: 0;width: 100%;height: 22px;text-align:center;border: 1px solid black;');
-            } else if (assigned == 'paul') {
+            } else if (assigned == 'Paul.') {
                 var elmNewContent = document.createTextNode('CAE Job Log:  Assigned to Paul');
                 div.setAttribute('style', 'position:absolute;top: 0;left: 0;right: 0;background:rgba(255, 153, 0, 0.5);margin: 0;width: 100%;height: 22px;text-align:center;border: 1px solid black;');
-            } else if (assigned == 'suzhou') {
+            } else if (assigned == 'Suzhou.') {
                 var elmNewContent = document.createTextNode('CAE Job Log:  Assigned to Suzhou');
                 div.setAttribute('style', 'position:absolute;top: 0;left: 0;right: 0;background:rgba(255, 255, 224, 0.5);margin: 0;width: 100%;height: 22px;text-align:center;border: 1px solid black;');
             } else {
