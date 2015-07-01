@@ -1,6 +1,6 @@
 // Import the APIs needed
 const pageMod = require("sdk/page-mod");
-const Request = require("sdk/request").Request;
+//const Request = require("sdk/request").Request;
 const tabs = require("sdk/tabs");
 const tab_utils = require("sdk/tabs/utils");
 const panels = require("sdk/panel");
@@ -27,7 +27,7 @@ Cu.import("resource://gre/modules/FileUtils.jsm");
 const { defer } = require('sdk/core/promise');
 const { setTimeout } = require("sdk/timers");
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
-const { XMLHttpRequest } = require("sdk/net/xhr");
+//const { XMLHttpRequest } = require("sdk/net/xhr");
 const { OS, TextEncoder, TextDecoder } = Cu.import("resource://gre/modules/osfile.jsm", {});
 
 const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
@@ -349,8 +349,7 @@ CAEmanager.addMessageListener("rtn_logged_h", function(username) {
 
 // Communication with about:guy
 Gmanager.addMessageListener("GetNote", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile = myFile.path + "\\" + msg.data + ".txt";
+    var myFile = OS.Path.join(UproFile, msg.data + ".txt");
     if (file.exists(myFile) === true ) {
         var notedata = readText(myFile);
         var notearray = new Array(notedata, msg.data);
@@ -372,34 +371,12 @@ Gmanager.addMessageListener("deleteNotes", function(msg) {
     console.log("Stored EWS notes removed.");
 });
 Gmanager.addMessageListener("SaveNote", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile.append(msg.data[0] + ".txt"); 
-    if ( myFile.exists() === false ) 
-         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
-    var ostream = FileUtils.openSafeFileOutputStream(myFile);
-    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
-    createInstance(Ci.nsIScriptableUnicodeConverter); 
-    converter.charset = "UTF-8"; 
-    var istream = converter.convertToInputStream(msg.data[1]); 
-    NetUtil.asyncCopy(istream, ostream, function(status) { 
-        if (!components.isSuccessCode(status))  
-            return; 
-    });
+    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
+    Write_data(myFile, msg.data[1]);
 });
 Gmanager.addMessageListener("SaveSizes", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile.append(msg.data[0] + ".txt"); 
-    if ( myFile.exists() === false ) 
-         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
-    var ostream = FileUtils.openSafeFileOutputStream(myFile);
-    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
-    createInstance(Ci.nsIScriptableUnicodeConverter); 
-    converter.charset = "UTF-8"; 
-    var istream = converter.convertToInputStream(msg.data[1]); 
-    NetUtil.asyncCopy(istream, ostream, function(status) { 
-        if (!components.isSuccessCode(status))  
-            return; 
-    });
+    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
+    Write_data(myFile, msg.data[1]);
 });
 Gmanager.addMessageListener("rtn_logged", function(username) {
     // Send user logs to content script when requested
@@ -421,8 +398,7 @@ Gmanager.addMessageListener("rtn_logged", function(username) {
 
 // Communication with about:scott
 Smanager.addMessageListener("GetNote", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile = myFile.path + "\\" + msg.data + ".txt";
+    var myFile = OS.Path.join(UproFile, msg.data + ".txt");
     if (file.exists(myFile) === true ) {
         var notedata = readText(myFile);
         var notearray = new Array(notedata, msg.data);
@@ -444,34 +420,12 @@ Smanager.addMessageListener("deleteNotes", function(msg) {
     console.log("Stored EWS notes removed.");
 });
 Smanager.addMessageListener("SaveNote", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile.append(msg.data[0] + ".txt"); 
-    if ( myFile.exists() === false ) 
-         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
-    var ostream = FileUtils.openSafeFileOutputStream(myFile);
-    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
-    createInstance(Ci.nsIScriptableUnicodeConverter); 
-    converter.charset = "UTF-8"; 
-    var istream = converter.convertToInputStream(msg.data[1]); 
-    NetUtil.asyncCopy(istream, ostream, function(status) { 
-        if (!components.isSuccessCode(status))  
-            return; 
-    });
+    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
+    Write_data(myFile, msg.data[1]);
 });
 Smanager.addMessageListener("SaveSizes", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile.append(msg.data[0] + ".txt"); 
-    if ( myFile.exists() === false ) 
-         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
-    var ostream = FileUtils.openSafeFileOutputStream(myFile);
-    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
-    createInstance(Ci.nsIScriptableUnicodeConverter); 
-    converter.charset = "UTF-8"; 
-    var istream = converter.convertToInputStream(msg.data[1]); 
-    NetUtil.asyncCopy(istream, ostream, function(status) { 
-        if (!components.isSuccessCode(status))  
-            return; 
-    });
+    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
+    Write_data(myFile, msg.data[1]);
 });
 Smanager.addMessageListener("rtn_logged", function(username) {
     // Send user logs to content script when requested
@@ -493,8 +447,7 @@ Smanager.addMessageListener("rtn_logged", function(username) {
 
 // Communication with about:paul
 Pmanager.addMessageListener("GetNote", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile = myFile.path + "\\" + msg.data + ".txt";
+    var myFile = OS.Path.join(UproFile, msg.data + ".txt");
     if (file.exists(myFile) === true ) {
         var notedata = readText(myFile);
         var notearray = new Array(notedata, msg.data);
@@ -516,34 +469,12 @@ Pmanager.addMessageListener("deleteNotes", function(msg) {
     console.log("Stored EWS notes removed.");
 });
 Pmanager.addMessageListener("SaveNote", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile.append(msg.data[0] + ".txt"); 
-    if ( myFile.exists() === false ) 
-         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
-    var ostream = FileUtils.openSafeFileOutputStream(myFile);
-    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
-    createInstance(Ci.nsIScriptableUnicodeConverter); 
-    converter.charset = "UTF-8"; 
-    var istream = converter.convertToInputStream(msg.data[1]); 
-    NetUtil.asyncCopy(istream, ostream, function(status) { 
-        if (!components.isSuccessCode(status))  
-            return; 
-    });
+    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
+    Write_data(myFile, msg.data[1]);
 });
 Pmanager.addMessageListener("SaveSizes", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile.append(msg.data[0] + ".txt"); 
-    if ( myFile.exists() === false ) 
-         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
-    var ostream = FileUtils.openSafeFileOutputStream(myFile);
-    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
-    createInstance(Ci.nsIScriptableUnicodeConverter); 
-    converter.charset = "UTF-8"; 
-    var istream = converter.convertToInputStream(msg.data[1]); 
-    NetUtil.asyncCopy(istream, ostream, function(status) { 
-        if (!components.isSuccessCode(status))  
-            return; 
-    });
+    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
+    Write_data(myFile, msg.data[1]);
 });
 Pmanager.addMessageListener("rtn_logged", function(username) {
     // Send user logs to content script when requested
@@ -565,8 +496,7 @@ Pmanager.addMessageListener("rtn_logged", function(username) {
 
 // Communication with about:suzhou
 Hmanager.addMessageListener("GetNote", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile = myFile.path + "\\" + msg.data + ".txt";
+    var myFile = OS.Path.join(UproFile, msg.data + ".txt");
     if (file.exists(myFile) === true ) {
         var notedata = readText(myFile);
         var notearray = new Array(notedata, msg.data);
@@ -588,34 +518,12 @@ Hmanager.addMessageListener("deleteNotes", function(msg) {
     console.log("Stored EWS notes removed.");
 });
 Hmanager.addMessageListener("SaveNote", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile.append(msg.data[0] + ".txt"); 
-    if ( myFile.exists() === false ) 
-         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
-    var ostream = FileUtils.openSafeFileOutputStream(myFile);
-    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
-    createInstance(Ci.nsIScriptableUnicodeConverter); 
-    converter.charset = "UTF-8"; 
-    var istream = converter.convertToInputStream(msg.data[1]); 
-    NetUtil.asyncCopy(istream, ostream, function(status) { 
-        if (!components.isSuccessCode(status))  
-            return; 
-    });
+    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
+    Write_data(myFile, msg.data[1]);
 });
 Hmanager.addMessageListener("SaveSizes", function(msg) {
-    let myFile = getLocalDirectory();
-    myFile.append(msg.data[0] + ".txt"); 
-    if ( myFile.exists() === false ) 
-         myFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0774", 8)); 
-    var ostream = FileUtils.openSafeFileOutputStream(myFile);
-    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]. 
-    createInstance(Ci.nsIScriptableUnicodeConverter); 
-    converter.charset = "UTF-8"; 
-    var istream = converter.convertToInputStream(msg.data[1]); 
-    NetUtil.asyncCopy(istream, ostream, function(status) { 
-        if (!components.isSuccessCode(status))  
-            return; 
-    });
+    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
+    Write_data(myFile, msg.data[1]);
 });
 Hmanager.addMessageListener("rtn_logged", function(username) {
     // Send user logs to content script when requested
@@ -936,15 +844,16 @@ function Write_data(name, data){
     return deferred.promise;
 }
 
-function getLocalDirectory () { 
-    let directoryService = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties); 
-    let localDir = directoryService.get("ProfD", Ci.nsIFile); 
-    localDir.append("CAEwidgets");
-    //console.log(localDir.path);
-    if (!localDir.exists() || !localDir.isDirectory())  
-        localDir.create(Ci.nsIFile.DIRECTORY_TYPE, parseInt("0774", 8)); 
-    return localDir; 
-}
+//Obsolete function
+//function getLocalDirectory () { 
+//    let directoryService = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties); 
+//    let localDir = directoryService.get("ProfD", Ci.nsIFile); 
+//    localDir.append("CAEwidgets");
+//    //console.log(localDir.path);
+//    if (!localDir.exists() || !localDir.isDirectory())  
+//        localDir.create(Ci.nsIFile.DIRECTORY_TYPE, parseInt("0774", 8)); 
+//    return localDir; 
+//}
 
 
 // about constants
