@@ -111,7 +111,7 @@ function init() {
         //Check if assigned job qty has changed 
         //First check if it's ever been set
         if (serArray !== "") {
-            var serArray = JSON.parse(serArray);
+            serArray = JSON.parse(serArray);
             //Then check if the length has changed
             if (thewidgets.length != serArray.length) {
                 //Qty changed so clear widget location data
@@ -120,16 +120,35 @@ function init() {
             //Qty not changed
             else {
                 for (var h = 0; h < thewidgets.length; h++) {
+                    var a = document.createElement('a');
+                        a.setAttribute('href', 'http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h]);
+                        a.textContent = thewidgets[h];
+                    var txt = document.createElement('textarea');
+                        txt.setAttribute('id', thewidgets[h] + '_note');
+                        txt.setAttribute('placeholder', 'Notes:');
+                        txt.setAttribute('autocomplete', 'off');
+                        txt.setAttribute('spellcheck', 'true');
+                        txt.setAttribute('rows', '6');
+                        txt.setAttribute('cols', '23');
+                        txt.setAttribute('onload', 'getNote(this.id);');
+                        txt.setAttribute('oninput', 'saveNotetoFile(this.id);');
+                    
                     if (serArray) {
                         var c = serArray[h].col;
                         var r = serArray[h].row;
                         var x = serArray[h].size_x;
                         var y = serArray[h].size_y;
-                        gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNotetoFile(this.id);"></textarea></li>', x, y, c, r);
+                        gridster.add_widget('<li></li>', x, y, c, r);
+                        var widget = document.getElementsByTagName('li')[h];
+                        widget.appendChild(a);
+                        widget.appendChild(txt);
                         //Request note and add
                         sendAsyncMessage("GetNote", thewidgets[h]);
                     } else {
-                        gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNotetoFile(this.id);"></textarea></li>', 2, 2);
+                        gridster.add_widget('<li></li>', 2, 2);
+                        var widget = document.getElementsByTagName('li')[h];
+                        widget.appendChild(a);
+                        widget.appendChild(txt);
                         //Request note and add
                         sendAsyncMessage("GetNote", thewidgets[h]);
                     }
@@ -138,10 +157,25 @@ function init() {
         }
         //Not set so just add widgets
         else {
-            for (var h = 0; h < thewidgets.length; h++) {
-                gridster.add_widget('<li class="new"><a href=http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[h] + '>' + thewidgets[h] + '</a><BR><textarea id="' + thewidgets[h] + '_note" placeholder="Notes:" autocomplete="off" spellcheck="true" rows="6" cols="23" onload="getNote(this.id)" oninput="saveNotetoFile(this.id);"></textarea></li>', 2, 2);
+            for (var i = 0; i < thewidgets.length; i++) {
+                var a = document.createElement('a');
+                    a.setAttribute('href', 'http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + thewidgets[i]);
+                    a.textContent = thewidgets[i];
+                var txt = document.createElement('textarea');
+                    txt.setAttribute('id', thewidgets[i] + '_note');
+                    txt.setAttribute('placeholder', 'Notes:');
+                    txt.setAttribute('autocomplete', 'off');
+                    txt.setAttribute('spellcheck', 'true');
+                    txt.setAttribute('rows', '6');
+                    txt.setAttribute('cols', '23');
+                    txt.setAttribute('onload', 'getNote(this.id);');
+                    txt.setAttribute('oninput', 'saveNotetoFile(this.id);');
+                gridster.add_widget('<li></li>', 2, 2);
+                var widget = document.getElementsByTagName('li')[i];
+                widget.appendChild(a);
+                widget.appendChild(txt);
                 //Request note and add
-                sendAsyncMessage("GetNote", thewidgets[h]);
+                sendAsyncMessage("GetNote", thewidgets[i]);
             }
         }
         });

@@ -38,7 +38,16 @@ function refreshInformation(output) {
     }
     
     //Remove total found
-	output.body.innerHTML = output.body.innerHTML.replace(/Total Metric Records Found: [0-9]+/ig,"");
+	//output.body.innerHTML = output.body.innerHTML.replace(/Total Metric Records Found: [0-9]+/ig,"");
+    var node = output.body; // base node 
+    var childs = node.childNodes, i = 0;
+
+    while(node == childs[i]){ 
+        if (node.nodeType == 3){ // text node found, do the replacement
+            node.textContent = node.textContent.replace(/Total Metric Records Found: [0-9]+/ig, "");
+        }
+        i++; 
+    } 
 
     // Remove "EWS Metric Results" text
     var h1 = output.getElementsByTagName('H1')[0];
@@ -88,7 +97,7 @@ function refreshInformation(output) {
     
     //Delete if Cell = "NA"
     for (var row=table_b.rows.length-1; row >= 0; row--) {
-        if(table_b.rows[row].cells[4].innerHTML == "NA"){
+        if(table_b.rows[row].cells[4].textContent == "NA"){
             //test = table_b.rows[row].cells[0].textContent
             //console.log("deleted " + test + " row: " + row);
             table_b.deleteRow (row);
@@ -97,7 +106,7 @@ function refreshInformation(output) {
     
     // Add header cell for column 6
     var th = output.createElement('th');
-    th.innerHTML = "ENG";
+    th.textContent = "ENG";
     table_b.rows[0].appendChild(th);
 
     for (var i = table_b.rows.length - 1; i >= 0; i--) {
@@ -105,9 +114,9 @@ function refreshInformation(output) {
         if (i !== 0) {
             if(!table_b.rows[i].cells[0].textContent == ""){
                 table_b.rows[i].insertCell(5);
-                table_b.rows[i].cells[5].innerHTML = "None"; 
+                table_b.rows[i].cells[5].textContent = "None"; 
 
-                var cae = table_b.rows[i].cells[4].innerHTML;
+                var cae = table_b.rows[i].cells[4].textContent;
                 var ews = table_b.rows[i].cells[0].textContent;
                 //Add attributes
                     table_b.rows[i].id=ews;
@@ -115,7 +124,7 @@ function refreshInformation(output) {
                 
                 //If there is a date then disable row
                 if (/[0-9]+-[A-Z]+-[0-9]+/.test(cae)) {
-                    table_b.rows[i].cells[5].innerHTML = "N/A"; 
+                    table_b.rows[i].cells[5].textContent = "N/A"; 
                 }
                 //If heading disable row
                 if (/EWS #/.test(ews)) {
@@ -156,7 +165,7 @@ function refreshInformation(output) {
         meta.setAttribute('content', 'text/html; charset=ISO-8859-1');
     var scr1 = output.createElement('script'); 
         scr1.setAttribute('type', 'text/javascript');
-        scr1.setAttribute('src', 'resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-2.1.3.js');
+        scr1.setAttribute('src', 'resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-2.1.4.js');
     var scr2 = output.createElement('script');
         scr2.setAttribute('type', 'text/javascript');
         scr2.setAttribute('src', 'resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery.tablesorter.js');
@@ -167,7 +176,6 @@ function refreshInformation(output) {
     head.appendChild(scr2);
     html.appendChild(head);
     var body = output.createElement('body');
-    //var datatable = output.getElementById('otherContent').innerHTML;
         body.appendChild(tables);
     var scr3 = output.createElement('script');
         scr3.setAttribute('language', 'JavaScript');

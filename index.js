@@ -75,7 +75,6 @@ function updateJobs(){
     function loadScript(url) {
         loader.loadSubScript(url);
     }
-    //loadScript("resource://CAEJobLog-at-tenneco-dot-com/data/js/jquery-3.0.0.pre.js");
     loadScript("resource://CAEJobLog-at-tenneco-dot-com/data/js/reconfig_prelim.js");
     
     let hiddenFrame = hiddenFrames.add(hiddenFrames.HiddenFrame({
@@ -271,7 +270,7 @@ CAEmanager.addMessageListener("unassign", function(upChange) {
         var user_log = readText(user_path);
         user_log = user_log.split(",");
         //Remove from log
-        user_log.splice(user_log.indexOf(ews), 1);
+        arrdestroy(user_log,String(ews));
         //Save new log
         Write_data(user_path, user_log);
         //Log change
@@ -283,6 +282,10 @@ CAEmanager.addMessageListener("unassign", function(upChange) {
         var curtotal = cae_button.badge;
         cae_button.badge = curtotal+1;
         cae_button.badgeColor = "#aa00aa";
+    }
+    function arrdestroy(arr, val) {
+        for (var i = 0; i < arr.length; i++) if (arr[i] === val) arr.splice(i, 1);
+        return arr;
     }
 });
 
@@ -718,7 +721,7 @@ pageMod.PageMod({
             image: self.data.url("./uEWS.png"),
             contentScript: 'self.on("click", function (node) {' +
                          '  var row = document.getElementById(node.id);' +
-                         '  var owner = row.cells[5].innerHTML;' +
+                         '  var owner = row.cells[5].textContent;' +
                          '  var ews = node.id;' +
                          '  var upChange = JSON.stringify({' +
                          '  ews: ews,' +
@@ -727,7 +730,7 @@ pageMod.PageMod({
                          '  self.postMessage(upChange);' +
                          '  row.setAttribute("class", "dnd border-fade wobble-horizontal");' +
                          '  row.setAttribute("style", "background-color:#E6EEEE;");' +
-                         '  row.cells[5].innerHTML = "None";' +
+                         '  row.cells[5].textContent = "None";' +
                          '});',
             onMessage: function (upChange) {
                 unassign(upChange);
@@ -748,7 +751,7 @@ pageMod.PageMod({
                 var user_log = readText(user_path);
                 user_log = user_log.split(",");
                 //Remove from log
-                user_log.splice(user_log.indexOf(ews), 1);
+                arrdestroy(user_log,String(ews));
                 //Save new log
                 Write_data(user_path, user_log);
                 //Log change
@@ -766,6 +769,10 @@ pageMod.PageMod({
                     cae_button.badgeColor = "#aa00aa";
                 }
             }
+        function arrdestroy(arr, val) {
+            for (var i = 0; i < arr.length; i++) if (arr[i] === val) arr.splice(i, 1);
+            return arr;
+        }
         }
     }
 });

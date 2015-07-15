@@ -37,7 +37,7 @@ var mytable = document.getElementsByTagName('table')[0];
     head.appendChild(link);
     
     for (var i = mytable.rows.length - 1; i >= 0; i--) {
-        var cae = mytable.rows[i].cells[4].innerHTML;
+        var cae = mytable.rows[i].cells[4].textContent;
         var ews = mytable.rows[i].cells[0].textContent;
         //Add attributes
             mytable.rows[i].className+='dnd border-fade wobble-horizontal';
@@ -49,7 +49,7 @@ var mytable = document.getElementsByTagName('table')[0];
         if (/[0-9]+-[A-Z]+-[0-9]+/.test(cae)) {
             mytable.rows[i].setAttribute('draggable', 'false');
             mytable.rows[i].className='disabled';
-            //tables.rows[i].cells[5].innerHTML = "N/A"; 
+            //tables.rows[i].cells[5].textContent = "N/A"; 
         }
         //If heading disable row
         if (/EWS #/.test(ews)) {
@@ -158,13 +158,25 @@ function modB(){
     var div_sum = document.createElement('div');
         div_sum.setAttribute('class', 'ui-state-highlight ui-corner-all total_note grow');
         div_sum.setAttribute('id', 'ews_totala');
-        div_sum.innerHTML = "0";
+        div_sum.textContent = "0";
     
     //Create reload button div
     var div_reload = document.createElement('div');
         div_reload.setAttribute('class', 'container2');
-        //var siteurl = "about:caejobs";
-        div_reload.innerHTML = "<a class='rel_but ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary' id='button'><span class='ui-button-icon-primary ui-icon ui-icon-arrowrefresh-1-w relo'></span><span class='ui-button-text'>Update</span></a>"; 
+    var a_reload = document.createElement('a');
+        a_reload.setAttribute('class', 'rel_but ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary');
+        a_reload.setAttribute('id', 'button');
+    var span_reload = document.createElement('span');
+        span_reload.setAttribute('class', 'ui-button-icon-primary ui-icon ui-icon-arrowrefresh-1-w relo');
+    var span2_reload = document.createElement('span');
+        span2_reload.setAttribute('class', 'ui-button-text');
+        span2_reload.textContent = "Update";
+        
+    a_reload.appendChild(span_reload);
+    a_reload.appendChild(span2_reload);
+    div_reload.appendChild(a_reload);
+        
+        //div_reload.textContent = "<a class='rel_but ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary' id='button'><span class='ui-button-icon-primary ui-icon ui-icon-arrowrefresh-1-w relo'></span><span class='ui-button-text'>Update</span></a>"; 
 
 // Appends all of the divs into the body  
     div.appendChild(div_gi);
@@ -254,35 +266,35 @@ function modB(){
         var count_value;
         var count2_value;
         //If currently assigned to someone but not owner drop target
-        var old_owner = row.cells[5].innerHTML.toLowerCase();
+        var old_owner = row.cells[5].textContent.toLowerCase();
         if (old_owner != "none" && old_owner != owner) {
             ews = new Array(ews);
             old_owner = new Array(old_owner);
             var upChange = new Array(ews, old_owner);
             unassign(upChange);
             count2 = document.getElementById(old_owner + '_note');
-            count2_value =  parseInt(count2.innerHTML) - 1;
-            count2.innerHTML = count2_value;
+            count2_value =  parseInt(count2.textContent) - 1;
+            count2.textContent = count2_value;
             if (owner == "guy") {
                 row.setAttribute('style', 'background:#0000FF;color:#008000;');
-                row.cells[5].innerHTML = "Guy";
+                row.cells[5].textContent = "Guy";
             }
             if (owner == "suzhou") {
                 row.setAttribute('style', 'background:yellow;color:#008000;');
-                row.cells[5].innerHTML = "Suzhou";
+                row.cells[5].textContent = "Suzhou";
             }
             if (owner == "paul") {
                 row.setAttribute('style', 'background:#FF9900;color:#008000;');
-                row.cells[5].innerHTML = "Paul";
+                row.cells[5].textContent = "Paul";
             }
             if (owner == "scott") {
                 row.setAttribute('style', 'background:#33CC99;color:#008000;');
-                row.cells[5].innerHTML = "Scott";
+                row.cells[5].textContent = "Scott";
             }
             //Fix total box value
             count = document.getElementById(owner + '_note');
-            count_value =  parseInt(count.innerHTML) + 1;
-            count.innerHTML = count_value;
+            count_value =  parseInt(count.textContent) + 1;
+            count.textContent = count_value;
             //Fix title for user box
             var newTitle = document.getElementById(owner + '_div');
             newTitle.setAttribute('title', count_value + ' Jobs Assigned');
@@ -293,30 +305,30 @@ function modB(){
         if (old_owner == "none") {
             if (owner == "guy") {
                 row.setAttribute('style', 'background:#0000FF;color:#008000;');
-                row.cells[5].innerHTML = "Guy";
+                row.cells[5].textContent = "Guy";
             }
             if (owner == "suzhou") {
                 row.setAttribute('style', 'background:yellow;color:#008000;');
-                row.cells[5].innerHTML = "Suzhou";
+                row.cells[5].textContent = "Suzhou";
             }
             if (owner == "paul") {
                 row.setAttribute('style', 'background:#FF9900;color:#008000;');
-                row.cells[5].innerHTML = "Paul";
+                row.cells[5].textContent = "Paul";
             }
             if (owner == "scott") {
                 row.setAttribute('style', 'background:#33CC99;color:#008000;');
-                row.cells[5].innerHTML = "Scott";
+                row.cells[5].textContent = "Scott";
             }
             //Fix total box value
             count = document.getElementById(owner + '_note');
-            count_value =  parseInt(count.innerHTML) + 1;
-            count.innerHTML = count_value;
+            count_value =  parseInt(count.textContent) + 1;
+            count.textContent = count_value;
             //Fix title for user box
             var newTitle = document.getElementById(owner + '_div');
             newTitle.setAttribute('title', count_value + ' Jobs Assigned');
             //Fix sum values - BROKEN
             //var theSum = document.getElementById("ews_totala");
-            //theSum.innerHTML = theSum.innerHTML+1;
+            //theSum.textContent = theSum.textContent+1;
             saveData(ews_value,owner);  
         }
         //If already assigned to same owner as drop target
@@ -343,7 +355,7 @@ var tables = document.getElementById('thetable');
                 if (all_logged_ews[h] == ews) {
                     if (dCHK == String.fromCharCode(160)) {
                         tables.rows[g].className+= " guy";
-                        tables.rows[g].cells[5].innerHTML = "Guy";
+                        tables.rows[g].cells[5].textContent = "Guy";
                     }
                     else { //Job has completed date so unassign
                         //var upChange = JSON.stringify({
@@ -358,7 +370,7 @@ var tables = document.getElementById('thetable');
             }
         }
         div_g = document.getElementById('guy_note');
-        div_g.innerHTML = guyTotal;
+        div_g.textContent = guyTotal;
         var div_gx = document.getElementById('guy_div');
         div_gx.setAttribute('title', guyTotal + ' Jobs Assigned');
         
@@ -376,7 +388,7 @@ var tables = document.getElementById('thetable');
                 if (all_logged_ews[h] == ews) {
                     if (dCHK == String.fromCharCode(160)) {
                         tables.rows[g].className+= " scott";
-                        tables.rows[g].cells[5].innerHTML = "Scott";
+                        tables.rows[g].cells[5].textContent = "Scott";
                     }
                     else { 
                         //Job has completed date so unassign
@@ -388,7 +400,7 @@ var tables = document.getElementById('thetable');
             }
         }
         div_s = document.getElementById('scott_note'); 
-        div_s.innerHTML = scottTotal;
+        div_s.textContent = scottTotal;
         var div_sx = document.getElementById('scott_div');
         div_sx.setAttribute('title', scottTotal + ' Jobs Assigned');
     });
@@ -405,7 +417,7 @@ var tables = document.getElementById('thetable');
                 if (all_logged_ews[h] == ews) {
                     if (dCHK == String.fromCharCode(160)) {
                         tables.rows[g].className+= " paul";
-                        tables.rows[g].cells[5].innerHTML = "Paul";
+                        tables.rows[g].cells[5].textContent = "Paul";
                     }
                     else { 
                         //Job has completed date so unassign
@@ -417,7 +429,7 @@ var tables = document.getElementById('thetable');
             }
         }
         div_p = document.getElementById('paul_note');  
-        div_p.innerHTML = paulTotal;
+        div_p.textContent = paulTotal;
         var div_px = document.getElementById('paul_div');
         div_px.setAttribute('title', paulTotal + ' Jobs Assigned');
     });
@@ -434,7 +446,7 @@ var tables = document.getElementById('thetable');
                 if (all_logged_ews[h] == ews) {
                     if (dCHK == String.fromCharCode(160)) {
                         tables.rows[g].className+= " suzhou";
-                        tables.rows[g].cells[5].innerHTML = "Suzhou";
+                        tables.rows[g].cells[5].textContent = "Suzhou";
                     }
                     else { 
                         //Job has completed date so unassign
@@ -446,16 +458,16 @@ var tables = document.getElementById('thetable');
             } 
         }
         div_h = document.getElementById('suzhou_note');  
-        div_h.innerHTML = suzhouTotal;
+        div_h.textContent = suzhouTotal;
         var div_sum = document.getElementById('ews_totala');
         var div_sum2 = document.createElement('span');
         div_sum2.setAttribute('id', 'ews_totalb');
-        var div_suma = parseInt(document.getElementById('guy_note').innerHTML);
-        var div_sumb = parseInt(document.getElementById('scott_note').innerHTML);
-        var div_sumc = parseInt(document.getElementById('paul_note').innerHTML);
-        var div_sumd = parseInt(document.getElementById('suzhou_note').innerHTML);
-        div_sum.innerHTML = div_suma + div_sumb + div_sumc + div_sumd + " / ";
-        div_sum2.innerHTML = tables.rows.length-1;
+        var div_suma = parseInt(document.getElementById('guy_note').textContent);
+        var div_sumb = parseInt(document.getElementById('scott_note').textContent);
+        var div_sumc = parseInt(document.getElementById('paul_note').textContent);
+        var div_sumd = parseInt(document.getElementById('suzhou_note').textContent);
+        div_sum.textContent = div_suma + div_sumb + div_sumc + div_sumd + " / ";
+        div_sum2.textContent = tables.rows.length-1;
         
         //Send values to update button
         var assignTotal = div_suma + div_sumb + div_sumc + div_sumd;
@@ -559,8 +571,8 @@ works.addEventListener("click", function() {
         var username = owner.data;
         console.log(username + " (-1)");
         var count = document.getElementById(username.toLowerCase() + '_note');
-        count_value =  parseInt(count.innerHTML) - 1;
-        count.innerHTML = count_value;
+        count_value =  parseInt(count.textContent) - 1;
+        count.textContent = count_value;
         var newTitle = document.getElementById(username.toLowerCase() + '_div');
         newTitle.setAttribute('title', count_value + ' Jobs Assigned');
     });
