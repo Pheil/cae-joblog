@@ -33,6 +33,7 @@ const { OS, TextEncoder, TextDecoder } = Cu.import("resource://gre/modules/osfil
 const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
 const UproFile = OS.Path.join(OS.Constants.Path.profileDir, "CAEwidgets");
 var myIconURL = self.data.url("./icon-16.png");
+var fileURL = require("./lib/fileURL.js");
 
 //Watch user log for updates (Job changes)
 var prefUser = "paul";
@@ -175,6 +176,22 @@ CAEmanager.addMessageListener("reloadx", function() {
     });
     //Start process
     updateJobs();
+});
+
+//Update print links
+CAEmanager.addMessageListener("prints", function(array) {
+    var URLarray = array.data;
+    var url = URLarray[0];
+    var part = URLarray[1];
+    if (url.includes("p_part_id")) {
+        var urlCHK = fileURL.FSdisplay(String(/[^\s]+/.exec(part)));
+        if (urlCHK != "unknown") {
+            var url_new = urlCHK;
+            var url_old = url;
+            var URLs = new Array(url_new, url_old);
+            CAEmanager.sendAsyncMessage("dPrints", URLs);
+        }
+    }
 });
 
 //update badge

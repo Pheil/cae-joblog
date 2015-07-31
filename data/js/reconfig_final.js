@@ -480,6 +480,33 @@ var tables = document.getElementById('thetable');
         div_hx.setAttribute('title', suzhouTotal + ' Jobs Assigned');
         tablesort();
     });
+        
+var links = document.getElementsByTagName("a");
+for (var i = 0; i < links.length; i++) {
+    var url = links[i].href;
+    var txt = links[i].textContent;
+    var urlData = new Array(url, txt);
+    sendAsyncMessage("prints", urlData);
+}
+
+addMessageListener("dPrints", function(urlData) {
+    var URLarray = urlData.data;
+    var url_new = URLarray[0];
+    var url_old = URLarray[1];
+    var links,thisLink;
+    links = document.evaluate("//a[@href]",
+        document,
+        null,
+        XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
+        null);
+
+    for (var i=0;i<links.snapshotLength;i++) {
+        var thisLink = links.snapshotItem(i);
+        if (thisLink.href == url_old) {
+            thisLink.href = thisLink.href.replace(url_old, url_new);
+        }
+    }
+});
     
 }    
 function saveData(ews_value, owner) {
