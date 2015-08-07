@@ -217,6 +217,7 @@ CAEmanager.addMessageListener("save", function(all_array) {
         var browserWindow = utils.getMostRecentBrowserWindow();
         var window = browserWindow.content;
         user = users[j];
+        var del_array = [];
         window[user + '_path'] = pathBase + user + "_log.txt";
         window[user + '_log'] = [];
         window[user + '_log_str'] = readText(window[user + '_path']);
@@ -232,13 +233,16 @@ CAEmanager.addMessageListener("save", function(all_array) {
                     owner_array[location] = user;                               // Match found so assign
                 } else if (location == -1) {
                     console.error("User record not found: " + window[user + '_chk']);
+                    del_array.push(window[user + '_chk']);
                     window[user + '_log'].splice(window[user + '_log'].indexOf(window[user + '_chk']), 1);    // Not found so remove from User log
                 }
             }
-            if (window[user + '_log'].length !== old_length) {
-                Write_data(window[user + '_path'], window[user + '_log']);      //Array changed so update file
-                console.log("User log updated [" + old_length + " -> " + window[user + '_log'].length + "]");
-            }
+        }
+        if (window[user + '_log'].length != old_length) {//Array changed so update users log file
+            console.error(user + " EWS log: " + old_length  + "->" + window[user + '_log'].length + " [" + del_array + "]");
+            Write_data(window[user + '_path'], window[user + '_log']);      
+            console.log("User log updated [" + old_length + " -> " + window[user + '_log'].length + "]");
+            console.log("Removed: " + del_array);
         }
     }
     var owner_path = pathBase + "owner_log.txt";
