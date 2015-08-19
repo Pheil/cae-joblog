@@ -106,7 +106,7 @@ function init() {
         }
 
         var thewidgets = widgets;
-        var serArray = serial; 
+        var serArray = serial;
         
         //Check if assigned job qty has changed 
         //First check if it's ever been set

@@ -106,7 +106,7 @@ function init() {
         }
 
         var thewidgets = widgets;
-        var serArray = serial;  
+        var serArray = serial;
         
         //Check if assigned job qty has changed 
         //First check if it's ever been set
@@ -190,14 +190,14 @@ works.addEventListener("click", function() {
 var clearSS = document.getElementById("delete");
 clearSS.addEventListener("click", function() {
     clearAll();
-    location.reload();
+    location.reload()
 }, false);
 
 //Reset sizes when button pressed
 var clearSize = document.getElementById("clearSize");
 clearSize.addEventListener("click", function() {
     clearSizes();
-    location.reload();
+    location.reload()
 }, false);
 
 $(window).load(function() {
