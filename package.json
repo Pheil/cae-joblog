@@ -4,17 +4,28 @@
   "id": "CAEJobLog@tenneco.com",
   "description": "Modifies metric report and adds job log and work assignment features.",
   "author": "Paul Heil",
+  "updateURL": "http://170.64.172.81/scripts/cae_update.rdf",
+  "updateKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4eKexgL7FKgLzOWkC2QcZvY2IgvJKigq0pKWLql6OEz5ZjUPbqLmGYzCSfDnONoWl4BN2kYfGoKYJmqGVdKFbZlHeW7MZVjOXBNw7OixAX4YIvIWp5Z7EVhqTRRf9AU51M1+bT0oU4TuOtNHbfd7uHrepfdVOejXz+S0+tQnpniXb1+1UTvleQ9YODejFV0rA7mv1nCqBvg2JF4+op0gWwoMNiRa8c2fXiTjAWbhaysrlcgzToN2VTMpRVK6pQIfQsRFblJ/CsLnxwZLwBspXC+pqZEtV2VS4VP2o2vCD1M5HiSltBiCxOeLePs3NMTvmyPc9NyO1MjOIAhyadgylwIDAQAB",
   "keywords": [],
   "license": "MPL-2.0",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "homepage": "http://tamilan.na.ten/cae/",
   "iconURL": "./icon-48.png",
   "icon64URL": "./icon-64.png",
   "main": "index.js",
+  "permissions": {
+    "multiprocess": true
+  },
   "dependencies": {
     "0": "addon-sdk"
   },
   "engines": {
     "firefox": ">=39.0"
-  }
+  },
+  "preferences": [{
+    "name": "userID",
+    "title": "User ID to append to Oracle code",
+    "type": "string",
+    "value": ""
+    }]
 }

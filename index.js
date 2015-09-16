@@ -15,6 +15,7 @@ const { ToggleButton } = require("sdk/ui/button/toggle");
 const buttons = require('sdk/ui/button/action');
 //const pageWorker = require("sdk/page-worker");
 var workers = require("sdk/content/worker");
+var preferences = require("sdk/simple-prefs").prefs;
 var notifications = require("sdk/notifications");
 var users = [];
 users.push("guy", "scott", "paul", "suzhou");
@@ -214,34 +215,32 @@ CAEmanager.addMessageListener("save", function(all_array) {
     // Update owner log vs user logs (already logged EWS)
     var user;
     for (var j=0; j < users.length; j++) {
-        var browserWindow = utils.getMostRecentBrowserWindow();
-        var window = browserWindow.content;
         user = users[j];
         var del_array = [];
-        window[user + '_path'] = pathBase + user + "_log.txt";
-        window[user + '_log'] = [];
-        window[user + '_log_str'] = readText(window[user + '_path']);
-        if (window[user + '_log_str'] !== null || window[user + '_log_str'] !== "") {
-            window[user + '_log'] = window[user + '_log_str'].split(",");
-            var curArray = window[user + '_log'];
+        var user_path = pathBase + user + "_log.txt";
+        var user_log = [];
+        var user_log_str = readText(user_path);
+        if (user_log_str !== null || user_log_str !== "") {
+            user_log = user_log_str.split(",");
+            var curArray = user_log;
             var old_length = curArray.length;
-            for (var i=0; i < window[user + '_log'].length; i++) {
-                window[user + '_chk'] = window[user + '_log'][i];
-                var location = ews_array.indexOf(window[user + '_chk']);        // Check for match in EWS list
+            for (var i=0; i < user_log.length; i++) {
+                var user_chk = user_log[i];
+                var location = ews_array.indexOf(user_chk);        // Check for match in EWS list
                 if (location > -1) {
-                    //console.log("RECORD FOUND " + location + " - " + window[user + '_chk']);
+                    //console.log("RECORD FOUND " + location + " - " + user_chk);
                     owner_array[location] = user;                               // Match found so assign
                 } else if (location == -1) {
-                    console.error("User record not found: " + window[user + '_chk']);
-                    del_array.push(window[user + '_chk']);
-                    window[user + '_log'].splice(window[user + '_log'].indexOf(window[user + '_chk']), 1);    // Not found so remove from User log
+                    console.error("User record not found: " + user_chk);
+                    del_array.push(user_chk);
+                    user_log.splice(user_log.indexOf(user_chk), 1);    // Not found so remove from User log
                 }
             }
         }
-        if (window[user + '_log'].length != old_length) {//Array changed so update users log file
-            console.error(user + " EWS log: " + old_length  + "->" + window[user + '_log'].length + " [" + del_array + "]");
-            Write_data(window[user + '_path'], window[user + '_log']);      
-            console.log("User log updated [" + old_length + " -> " + window[user + '_log'].length + "]");
+        if (user_log.length != old_length) {//Array changed so update users log file
+            console.error(user + " EWS log: " + old_length  + "->" + user_log.length + " [" + del_array + "]");
+            Write_data(user_path, user_log);      
+            console.log("User log updated [" + old_length + " -> " + user_log.length + "]");
             console.log("Removed: " + del_array);
         }
     }
@@ -313,8 +312,6 @@ CAEmanager.addMessageListener("unassign", function(upChange) {
 //guy log
 CAEmanager.addMessageListener("rtn_logged_g", function(username) {
     // Send user log to content script when requested
-    var browserWindow = utils.getMostRecentBrowserWindow();
-    var window = browserWindow.content;
     var user = username.data;
     var guy_path = pathBase + user + "_log.txt";
     var guy_log_str = readText(guy_path);
@@ -328,8 +325,6 @@ CAEmanager.addMessageListener("rtn_logged_g", function(username) {
 //paul log
 CAEmanager.addMessageListener("rtn_logged_p", function(username) {
     // Send user log to content script when requested
-    var browserWindow = utils.getMostRecentBrowserWindow();
-    var window = browserWindow.content;
     var user = username.data;
     var paul_path = pathBase + user + "_log.txt";
     var paul_log_str = readText(paul_path);
@@ -343,8 +338,6 @@ CAEmanager.addMessageListener("rtn_logged_p", function(username) {
 //scott log
 CAEmanager.addMessageListener("rtn_logged_s", function(username) {
     // Send user log to content script when requested
-    var browserWindow = utils.getMostRecentBrowserWindow();
-    var window = browserWindow.content;
     var user = username.data;
     var scott_path = pathBase + user + "_log.txt";
     var scott_log_str = readText(scott_path);
@@ -358,8 +351,6 @@ CAEmanager.addMessageListener("rtn_logged_s", function(username) {
 //suzhou log
 CAEmanager.addMessageListener("rtn_logged_h", function(username) {
     // Send user log to content script when requested
-    var browserWindow = utils.getMostRecentBrowserWindow();
-    var window = browserWindow.content;
     var user = username.data;
     var suzhou_path = pathBase + user + "_log.txt";
     var suzhou_log_str = readText(suzhou_path);
@@ -613,7 +604,7 @@ cae_panel.port.on("click_link", function (text) {
     //console.log(text);
     if (text == "oracle") {
         var clipboard = require("sdk/clipboard");
-        clipboard.set("<script>var fileref=document.createElement('script');fileref.setAttribute('type','text/javascript');fileref.setAttribute('src', 'http://tamilan.na.ten/cae/EWS/ews.js');document.getElementsByTagName('head')[0].appendChild(fileref);</script><p><a class='iframe' id='caer' href='http://tamilan.na.ten/cae/EWS/viewer.htm'>View Results</a></p>");
+        clipboard.set("<script>var fileref=document.createElement('script');fileref.setAttribute('type','text/javascript');fileref.setAttribute('src', 'http://tamilan.na.ten/cae/EWS/ews.js');document.getElementsByTagName('head')[0].appendChild(fileref);</script><p><a class='iframe' id='caer' href='http://tamilan.na.ten/cae/EWS/viewer.htm'>View Results</a></p>" + preferences.userID);
         notifications.notify({
             title: "CAE Job Log",
             text: "Oracle code copied to clipboard.",
