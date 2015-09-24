@@ -35,7 +35,6 @@ input[type="file"] > input[type="button"]::-moz-focus-inner {
     background: url(../btn_bg.png) repeat-x 0 0;
     height: 35px;
     border: 1px solid #cac9c9;
-    -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px;
     font-size: 12px;

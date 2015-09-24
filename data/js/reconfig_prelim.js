@@ -78,7 +78,7 @@ function refreshInformation(output) {
     
     //Delete projects row
     for (var row=0; row<table_b.rows.length;row++) {
-        if(table_b.rows[row].cells[0].textContent == ""){
+        if(table_b.rows[row].cells[0].textContent == ""){ //DO NOT CHANGE TO ===
             table_b.deleteRow(row); 
         }
     }
@@ -112,7 +112,7 @@ function refreshInformation(output) {
     for (var i = table_b.rows.length - 1; i >= 0; i--) {
         //Add cell for assigned name
         if (i !== 0) {
-            if(!table_b.rows[i].cells[0].textContent == ""){
+            if(!table_b.rows[i].cells[0].textContent == ""){ //DO NOT CHANGE TO ===
                 table_b.rows[i].insertCell(5);
                 table_b.rows[i].cells[5].textContent = "None"; 
 
@@ -155,7 +155,7 @@ function refreshInformation(output) {
     var link1 = output.createElement('link');
         link1.setAttribute('rel', 'stylesheet');
         link1.setAttribute('type', 'text/css');
-        link1.setAttribute('href', 'resource://CAEJobLog-at-tenneco-dot-com/data/css/jquery-ui.css');
+        link1.setAttribute('href', 'resource://CAEJobLog-at-tenneco-dot-com/data/css/jquery-ui.min.css');
     var link2 = output.createElement('link');
         link2.setAttribute('rel', 'stylesheet');
         link2.setAttribute('type', 'text/css');
@@ -184,6 +184,6 @@ function refreshInformation(output) {
     html.appendChild(body);
 
     //Send data to index.js
-    var tabledata = output.getElementsByTagName('html')[0].innerHTML
+    var tabledata = output.getElementsByTagName('html')[0].innerHTML;
     return html.innerHTML;
 }

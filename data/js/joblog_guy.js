@@ -40,7 +40,7 @@ var gridster;
 $(function() {
 
     gridster = $(".gridster > ul").gridster({
-        widget_margins: [10, 10],
+        widget_margins: [5, 5],
         widget_base_dimensions: [100, 55],
         helper: 'clone',
         resize: {

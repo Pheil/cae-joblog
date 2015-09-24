@@ -156,7 +156,6 @@ function CAEmanagerUpdate(){
     );
 }
 
-//FF39 required
 Cu.import("resource://gre/modules/RemotePageManager.jsm");
 let CAEmanager = new RemotePages("about:caejobs");
 let Gmanager = new RemotePages("about:guy");
@@ -281,6 +280,8 @@ CAEmanager.addMessageListener("update", function(upChange) {
 
 //unassign
 CAEmanager.addMessageListener("unassign", function(upChange) {
+    console.log(ews + " unassigned from " + owner + ".");
+        
     // Unassign changed record
     var ews = upChange.data[0];
     var owner = upChange.data[1];
@@ -293,8 +294,6 @@ CAEmanager.addMessageListener("unassign", function(upChange) {
         arrdestroy(user_log,String(ews));
         //Save new log
         Write_data(user_path, user_log);
-        //Log change
-        console.log(ews + " unassigned from " + owner + ".");
         
         //Send owner to remove value from
         CAEmanager.sendAsyncMessage("unassignNum", owner);
@@ -369,6 +368,8 @@ Gmanager.addMessageListener("GetNote", function(msg) {
         var notedata = readText(myFile);
         var notearray = new Array(notedata, msg.data);
         Gmanager.sendAsyncMessage("SetNote", notearray);
+    } else {
+        
     }
 });
 Gmanager.addMessageListener("deleteNotes", function(msg) {
@@ -561,12 +562,27 @@ Hmanager.addMessageListener("rtn_logged", function(username) {
 // Preferences
 //var prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
 
-//Create empty logfiles if they do not exist (for notes)
-dfCHK(OS.Path.join(UproFile, "scott.txt"));
-dfCHK(OS.Path.join(UproFile, "paul.txt"));
-dfCHK(OS.Path.join(UproFile, "suzhou.txt"));
-dfCHK(OS.Path.join(UproFile, "guy.txt"));
-dfCHK(OS.Path.join(UproFile, "caejobs.html"));
+//Create empty note log files if they do not exist, writeatomic error without if statements
+if (file.exists(UproFile, "guy.txt") === false ) {
+    dfCHK(OS.Path.join(UproFile, "guy.txt"));
+}
+if (file.exists(UproFile, "scott.txt") === false ) {
+    dfCHK(OS.Path.join(UproFile, "scott.txt"));
+}
+if (file.exists(UproFile, "paul.txt") === false ) {
+    dfCHK(OS.Path.join(UproFile, "paul.txt"));
+}
+if (file.exists(UproFile, "suzhou.txt") === false ) {
+    dfCHK(OS.Path.join(UproFile, "suzhou.txt"));
+}
+if (file.exists(UproFile, "caejobs.html") === false ) {
+    dfCHK(OS.Path.join(UproFile, "caejobs.html"));
+}
+// dfCHK(OS.Path.join(UproFile, "scott.txt"));
+// dfCHK(OS.Path.join(UproFile, "paul.txt"));
+// dfCHK(OS.Path.join(UproFile, "suzhou.txt"));
+// dfCHK(OS.Path.join(UproFile, "guy.txt"));
+// dfCHK(OS.Path.join(UproFile, "caejobs.html"));
 // Blank caejobs file is copied from dfCHK function
 
 
@@ -599,6 +615,46 @@ var cae_panel = panels.Panel({
     contentScript: myScript
 });
 
+function openAndReuseOneTabPerURL(url) {
+  var wm = Cc["@mozilla.org/appshell/window-mediator;1"]
+                     .getService(Ci.nsIWindowMediator);
+  var browserEnumerator = wm.getEnumerator("navigator:browser");
+
+  // Check each browser instance for our URL
+  var found = false;
+  while (!found && browserEnumerator.hasMoreElements()) {
+    var browserWin = browserEnumerator.getNext();
+    var tabbrowser = browserWin.gBrowser;
+
+    // Check each tab of this browser instance
+    var numTabs = tabbrowser.browsers.length;
+    for (var index = 0; index < numTabs; index++) {
+      var currentBrowser = tabbrowser.getBrowserAtIndex(index);
+      if (url == currentBrowser.currentURI.spec) {
+
+        // The URL is already opened. Select this tab.
+        tabbrowser.selectedTab = tabbrowser.tabContainer.childNodes[index];
+
+        // Focus *this* browser-window
+        browserWin.focus();
+
+        found = true;
+        break;
+      }
+    }
+  }
+
+  // Our URL isn't open. Open it now.
+  if (!found) {
+    tabs.open({
+        url: url,
+        isPinned: true,
+        inNewWindow: false,
+        inBackground: false
+    });
+  }
+}
+
 cae_panel.port.on("click_link", function (text) {
     //tabs.open(self.data.url(text));
     //console.log(text);
@@ -613,44 +669,40 @@ cae_panel.port.on("click_link", function (text) {
     }
 //http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL
     else if (text == "assign") {
-        tabs.open({
-            url: "about:caejobs",
-            isPinned: true,
-            inNewWindow: false,
-            inBackground: false
-        });
+        openAndReuseOneTabPerURL("about:caejobs");
+        // tabs.open({
+            // url: "about:caejobs",
+            // isPinned: true,
+            // inNewWindow: false,
+            // inBackground: false
+        // });
     }
     else if (text == "upload") {
-        tabs.open({
-            url: "http://tamilan.na.ten/cae/EWS/",
-            isPinned: true,
-            inNewWindow: false,
-            inBackground: false
-        });
+        openAndReuseOneTabPerURL("http://tamilan.na.ten/cae/EWS/");
+        // tabs.open({
+            // url: "http://tamilan.na.ten/cae/EWS/",
+            // isPinned: true,
+            // inNewWindow: false,
+            // inBackground: false
+        // });
     }
     else if (text == "admin") {
-        tabs.open({
-            url: "http://tamilan.na.ten/cae/EWS/CAEadmin.php",
-            isPinned: true,
-            inNewWindow: false,
-            inBackground: false
-        });
+        openAndReuseOneTabPerURL("http://tamilan.na.ten/cae/EWS/CAEadmin.php");
+        // tabs.open({
+            // url: "http://tamilan.na.ten/cae/EWS/CAEadmin.php",
+            // isPinned: true,
+            // inNewWindow: false,
+            // inBackground: false
+        // });
     }
     else {
-        //Disabled checking if tab is open already until multiprocess compatible method is used
-            //var isTab = tab_utils.isTabOpen("about:" + text);
-            //if (isTab == false) {
-                    tabs.open({
-                        url: "about:" + text,
-                        isPinned: true,
-                        inNewWindow: false,
-                        inBackground: false
-                    });
-            //} else {
-            //    var tabID = tab_utils.getTabId("about:" + text);
-            //    tabs[tabID].activate();
-            //    tabs[tabID].reload();
-            //}
+        openAndReuseOneTabPerURL("about:" + text);
+        // tabs.open({
+            // url: "about:" + text,
+            // isPinned: true,
+            // inNewWindow: false,
+            // inBackground: false
+        // });
     } 
     handleHide();
 });
