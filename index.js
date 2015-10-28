@@ -32,6 +32,7 @@ const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 const { OS, TextEncoder, TextDecoder } = Cu.import("resource://gre/modules/osfile.jsm", {});
 
 const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
+//const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\test\\"; //TEST DATA
 const UproFile = OS.Path.join(OS.Constants.Path.profileDir, "CAEwidgets");
 var myIconURL = self.data.url("./icon-16.png");
 var fileURL = require("./lib/fileURL.js");
@@ -134,14 +135,6 @@ function CAEmanagerUpdate(){
     var promise = OS.File.copy(patha, pathb);
     promise.then(
         function(aStat) {
-            //console.log('Copy blank caejobs Success');
-            //Re-open tab
-            //tabs.open({
-            //    url: "about:caejobs",
-            //    isPinned: true,
-            //    inNewWindow: false,
-            //    inBackground: false
-            //});
             notifications.notify({
                 title: "CAE Job Log",
                 text: "Job List Updated",
@@ -150,7 +143,7 @@ function CAEmanagerUpdate(){
             CAEmanager.sendAsyncMessage("pageready");
         },
         function(aReason) {
-            console.log('Copy blank caejobs failed, see console for details');
+            console.error('Copy blank caejobs failed, see console for details');
             console.log('promise rejected', aReason);
         }
     );
@@ -201,28 +194,31 @@ CAEmanager.addMessageListener("badge", function(state) {
     cae_button.badgeColor = "#AA00AA";
 });
 
-//update master
+// Update master
+// This function does not work correctly when FF is reloaded and page data is stale
+// User records will be incorrectly unassigned if not reloaded first.
+// Disabled auto removal of not found records
 CAEmanager.addMessageListener("save", function(all_array) {
     //console.log(all_array);
-    var ews_array = all_array.data[0];
-    var owner_array = all_array.data[1];
-                
+    var ews_array = all_array.data[0],
+        owner_array = all_array.data[1],
+        ews_path = pathBase + "ews_log.txt";
     // Save ews list
-    var ews_path = pathBase + "ews_log.txt";
     Write_data(ews_path, ews_array);
     
     // Update owner log vs user logs (already logged EWS)
     var user;
     for (var j=0; j < users.length; j++) {
         user = users[j];
-        var del_array = [];
-        var user_path = pathBase + user + "_log.txt";
-        var user_log = [];
-        var user_log_str = readText(user_path);
+        var del_array = [],
+            old_length,
+            user_log = [],
+            user_path = pathBase + user + "_log.txt",
+            user_log_str = readText(user_path);
         if (user_log_str !== null || user_log_str !== "") {
             user_log = user_log_str.split(",");
             var curArray = user_log;
-            var old_length = curArray.length;
+            old_length = curArray.length;
             for (var i=0; i < user_log.length; i++) {
                 var user_chk = user_log[i];
                 var location = ews_array.indexOf(user_chk);        // Check for match in EWS list
@@ -232,15 +228,20 @@ CAEmanager.addMessageListener("save", function(all_array) {
                 } else if (location == -1) {
                     console.error("User record not found: " + user_chk);
                     del_array.push(user_chk);
-                    user_log.splice(user_log.indexOf(user_chk), 1);    // Not found so remove from User log
+                    //user_log.splice(user_log.indexOf(user_chk), 1);    // Not found so remove from User log (disabled)
                 }
             }
         }
         if (user_log.length != old_length) {//Array changed so update users log file
-            console.error(user + " EWS log: " + old_length  + "->" + user_log.length + " [" + del_array + "]");
+            console.log(user + " EWS log: " + old_length  + "->" + user_log.length + " [" + del_array + "]");
+            notifications.notify({
+                title: "CAE Job Log",
+                text: user + "'s log contains unmatched worksheets: \n\n" + del_array,
+                iconURL: myIconURL
+            });
             Write_data(user_path, user_log);      
-            console.log("User log updated [" + old_length + " -> " + user_log.length + "]");
-            console.log("Removed: " + del_array);
+            console.info("User log updated [" + old_length + " -> " + user_log.length + "]");
+            //console.info("Removed: " + del_array);
         }
     }
     var owner_path = pathBase + "owner_log.txt";
@@ -841,6 +842,132 @@ pageMod.PageMod({
     }
 });
 
+function unassignUSER(upChange) {
+    var parsedupChange = JSON.parse(upChange),
+        ews = parsedupChange.ews,
+        owner = parsedupChange.owner;
+    if (owner != "none") {
+        var user_path = pathBase + owner + "_log.txt",
+            user_log = readText(user_path);        //Retrieve log
+        user_log = user_log.split(",");
+        arrdestroy(user_log,String(ews));        //Remove from log
+        Write_data(user_path, user_log);        //Save new log
+        console.log(ews + " unassigned from " + owner + ".");
+    }
+    function arrdestroy(arr, val) {
+        for (var i = 0; i < arr.length; i++) if (arr[i] === val) arr.splice(i, 1);
+        return arr;
+    }
+}
+pageMod.PageMod({
+    include: "about:guy",
+    onAttach: function(worker) {
+        var cae_menuItem = cm.Item({
+            label: "Unassign EWS",
+            context: [cm.SelectorContext("a"), cm.URLContext("about:guy")],
+            image: self.data.url("./uEWS.png"),
+            contentScript: 'self.on("click", function (node) {' +
+                         '  var owner = "guy",' +
+                         '      ews = node.textContent,' +
+                         '      upChange = JSON.stringify({' +
+                         '  ews: ews,' +
+                         '  owner: owner' +
+                         '  });' +
+                         '  self.postMessage(upChange);' +
+                         '  location.reload();' +
+                         '});',
+            onMessage: function (upChange) {
+                unassignUSER(upChange);
+            }
+        });
+        
+        worker.on('detach', function () {
+            cae_menuItem.destroy();
+        });
+    }
+});
+pageMod.PageMod({
+    include: "about:scott",
+    onAttach: function(worker) {
+        var cae_menuItem = cm.Item({
+            label: "Unassign EWS",
+            context: [cm.SelectorContext("a"), cm.URLContext("about:scott")],
+            image: self.data.url("./uEWS.png"),
+            contentScript: 'self.on("click", function (node) {' +
+                         '  var owner = "scott",' +
+                         '      ews = node.textContent,' +
+                         '      upChange = JSON.stringify({' +
+                         '  ews: ews,' +
+                         '  owner: owner' +
+                         '  });' +
+                         '  self.postMessage(upChange);' +
+                         '  location.reload();' +
+                         '});',
+            onMessage: function (upChange) {
+                unassignUSER(upChange);
+            }
+        });
+        
+        worker.on('detach', function () {
+            cae_menuItem.destroy();
+        });
+    }
+});
+pageMod.PageMod({
+    include: "about:paul",
+    onAttach: function(worker) {
+        var cae_menuItem = cm.Item({
+            label: "Unassign EWS",
+            context: [cm.SelectorContext("a"), cm.URLContext("about:paul")],
+            image: self.data.url("./uEWS.png"),
+            contentScript: 'self.on("click", function (node) {' +
+                         '  var owner = "paul",' +
+                         '      ews = node.textContent,' +
+                         '      upChange = JSON.stringify({' +
+                         '  ews: ews,' +
+                         '  owner: owner' +
+                         '  });' +
+                         '  self.postMessage(upChange);' +
+                         '  location.reload();' +
+                         '});',
+            onMessage: function (upChange) {
+                unassignUSER(upChange);
+            }
+        });
+        
+        worker.on('detach', function () {
+            cae_menuItem.destroy();
+        });
+    }
+});
+pageMod.PageMod({
+    include: "about:suzhou",
+    onAttach: function(worker) {
+        var cae_menuItem = cm.Item({
+            label: "Unassign EWS",
+            context: [cm.SelectorContext("a"), cm.URLContext("about:suzhou")],
+            image: self.data.url("./uEWS.png"),
+            contentScript: 'self.on("click", function (node) {' +
+                         '  var owner = "suzhou",' +
+                         '      ews = node.textContent,' +
+                         '      upChange = JSON.stringify({' +
+                         '  ews: ews,' +
+                         '  owner: owner' +
+                         '  });' +
+                         '  self.postMessage(upChange);' +
+                         '  location.reload();' +
+                         '});',
+            onMessage: function (upChange) {
+                unassignUSER(upChange);
+            }
+        });
+        
+        worker.on('detach', function () {
+            cae_menuItem.destroy();
+        });
+    }
+});
+
 function dfCHK(thename){
     //Create CAE directory and empty files if they don't exist
     OS.File.makeDir(UproFile);
@@ -857,8 +984,8 @@ function dfCHK(thename){
                         console.log('Copy blank caejobs Success');
                     },
                     function(aReason) {
-                        console.log('Copy blank caejobs failed, see console for details');
-                        console.log('promise rejected', aReason);
+                        console.error('Copy blank caejobs failed, see console for details');
+                        console.info('promise rejected', aReason);
                     }
                 );
             }
@@ -871,7 +998,7 @@ function dfCHK(thename){
 
 function readText(thename){
     if(!file.exists(thename)){
-        console.log("Log missing! (" + thename + ")");
+        console.error("Log missing! (" + thename + ")");
         return null;
     }
     let promise = OS.File.stat(thename);
@@ -885,10 +1012,10 @@ function readText(thename){
       function onFailure(reason) {
         if (reason instanceof OS.File.Error && reason.becauseNoSuchFile) {
             // |somePath| does not represent anything
-            console.log("Log missing");
+            console.error("Log missing");
         } else {
             // some other error
-            console.log("Error opening log");
+            console.error("Error opening log");
         }
        return null;
       }

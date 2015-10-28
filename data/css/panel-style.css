@@ -31,7 +31,6 @@ input[type="file"] > input[type="button"]::-moz-focus-inner {
 }
 .main_btn {
     padding: 1px 6px 1px 16px;
-    outline: none;
     background: url(../btn_bg.png) repeat-x 0 0;
     height: 35px;
     border: 1px solid #cac9c9;
@@ -65,26 +64,22 @@ input[type="file"] > input[type="button"]::-moz-focus-inner {
     width: 24px;
 }
 
-.main_btn i.entire {
-
-}
-
-.main_btn i.selected {
+.main_btn .selected {
     background-position: -24px 0;
 }
 
-.main_btn i.visible {
+.main_btn .visible {
     background-position: -48px 0;
 }
 
-.main_btn i.browser {
+.main_btn .browser {
     background-position: -72px 0;
 }
 
-.main_btn i.blank {
+.main_btn .blank {
     background-position: -96px 0;
 }
-.main_btn.active {
+.main_btn .active {
     background-position: 0 -70px;
 }
 
@@ -100,8 +95,13 @@ input[type="file"] > input[type="button"]::-moz-focus-inner {
 .settings_btn:hover {
     color: #000;
 }
-.settings_btn i.options {
-    background: url(../btn_icons.png) no-repeat -120px 0;
+
+.o_btn i {
+    background: url(../btn_icons.png) no-repeat 0 0;
+}
+
+.o_btn .options {
+    background-position: -120px 0;
     width: 13px;
     height: 13px;
     display: block;
@@ -125,8 +125,8 @@ button.settings_btn {
 .oracle:hover {
     color: #000;
 }
-.oracle i.copyr {
-    background: url(../btn_icons.png) no-repeat -120px -12px;
+.o_btn .copyr {
+    background-position: -120px -12px;
     width: 13px;
     height: 13px;
     display: block;
@@ -150,8 +150,8 @@ button.oracle {
 .upload_btn:hover {
     color: #000;
 }
-.upload_btn i.upload {
-    background: url(../btn_icons.png) no-repeat -95px -3px;
+.o_btn .upload {
+    background-position: -95px -3px;
     width: 13px;
     height: 13px;
     display: block;
@@ -175,7 +175,7 @@ button.upload_btn {
 .admin_btn:hover {
     color: #000;
 }
-.admin_btn i.admin {
+.admin {
     background: url(images/ui-icons_222222_256x240.png) no-repeat -146px -98px;
     width: 13px;
     height: 13px;
