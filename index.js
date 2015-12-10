@@ -1,6 +1,6 @@
 // Import the APIs needed
 const pageMod = require("sdk/page-mod");
-//const Request = require("sdk/request").Request;
+const Request = require("sdk/request").Request;
 const tabs = require("sdk/tabs");
 const tab_utils = require("sdk/tabs/utils");
 const panels = require("sdk/panel");
@@ -19,6 +19,7 @@ var preferences = require("sdk/simple-prefs").prefs;
 var notifications = require("sdk/notifications");
 var users = [];
 users.push("guy", "scott", "paul", "suzhou");
+//           0       1       2        3
 const utils = require('sdk/window/utils');
 const {Cc,Ci,Cm,Cu,components} = require("chrome");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
@@ -30,16 +31,66 @@ const { setTimeout } = require("sdk/timers");
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 //const { XMLHttpRequest } = require("sdk/net/xhr");
 const { OS, TextEncoder, TextDecoder } = Cu.import("resource://gre/modules/osfile.jsm", {});
+Cu.import("resource://gre/modules/RemotePageManager.jsm");
 
-const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
-//const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\test\\"; //TEST DATA
+//const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
+const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\test\\"; //TEST DATA
 const UproFile = OS.Path.join(OS.Constants.Path.profileDir, "CAEwidgets");
-var myIconURL = self.data.url("./icon-16.png");
-var fileURL = require("./lib/fileURL.js");
+var myIconURL = self.data.url("./icon-64.png");
+var fileURL = require("./data/lib/fileURL.js");
 
-//Watch user log for updates (Job changes)
-var prefUser = "paul";
-var prefUlog = pathBase + prefUser + '_log.txt';
+exports.main = function(options, callbacks) {
+    if (options.loadReason == "install") {
+        factory = new Factory(AboutCAEJobs);
+        factory = new Factory(About0Viewer);
+        factory = new Factory(About1Viewer);
+        factory = new Factory(About2Viewer);
+        factory = new Factory(About3Viewer);
+        registerRemotePages();
+        //var thename = OS.Path.join(UproFile, "caejobs.html");
+        //var fromPath = pathBase + "caejobs.blank";
+        //var promise = OS.File.copy(fromPath, thename);
+        //promise.then(
+        //    function(aStat) {
+        //        console.log('Copy blank caejobs Success');
+        //    },
+        //    function(aReason) {
+        //        console.error('Copy blank caejobs failed, see console for details');
+        //        console.info('promise rejected', aReason);
+        //    }
+        //);
+    } else if (options.loadReason == "startup") {
+        factory = new Factory(AboutCAEJobs);
+        factory = new Factory(About0Viewer);
+        factory = new Factory(About1Viewer);
+        factory = new Factory(About2Viewer);
+        factory = new Factory(About3Viewer);
+        registerRemotePages();
+    }
+}
+
+exports.onUnload = function (reason) {
+    if (reason == "shutdown") {
+        factory.unregister();
+        RemotePageManager.removeRemotePageListener("about:caejobs");
+        RemotePageManager.removeRemotePageListener("about:" + users[0]);
+        RemotePageManager.removeRemotePageListener("about:" + users[1]);
+        RemotePageManager.removeRemotePageListener("about:" + users[2]);
+        RemotePageManager.removeRemotePageListener("about:" + users[3]);
+    }
+};
+
+function registerRemotePages(){
+    let CAEmanager = new RemotePages("about:caejobs");
+    let Gmanager = new RemotePages("about:" + users[0]);
+    let Smanager = new RemotePages("about:" + users[1]);
+    let Pmanager = new RemotePages("about:" + users[2]);
+    let Hmanager = new RemotePages("about:" + users[3]);
+}
+
+//Watch user log for updates (Job changes) (ALPHA CODE)
+//var prefUser = "paul";
+//var prefUlog = pathBase + prefUser + '_log.txt';
 
 /* var chokidar = require('chokidar');
 var watcher = chokidar.watch(prefUlog, {
@@ -69,523 +120,19 @@ watcher.on('change', function(path, stats) {
 watcher.close(); */
 
 
-function updateJobs(){
-//FF38 Required
-    var hiddenFrames = require("sdk/frame/hidden-frame");
-    var instance = Cc["@mozilla.org/moz/jssubscript-loader;1"];
-    var loader = instance.getService(Ci.mozIJSSubScriptLoader);
-
-    function loadScript(url) {
-        loader.loadSubScript(url);
-    }
-    loadScript("resource://CAEJobLog-at-tenneco-dot-com/data/js/reconfig_prelim.js");
-    
-    let hiddenFrame = hiddenFrames.add(hiddenFrames.HiddenFrame({
-      onReady: function() {
-        this.element.contentWindow.location = "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No";
-        let self = this;
-        this.element.addEventListener("DOMContentLoaded", function() {
-            //console.log(self.element.contentDocument.title);
-            var datadump = refreshInformation(self.element.contentDocument);
-
-            //Temp open table in tab
-            function delay(ms, value) {
-              let { promise, resolve } = defer();
-              setTimeout(resolve, ms, value);
-              return promise;
-            }
-
-            function timeout(promise, ms) {
-              let deferred = defer();
-              promise.then(deferred.resolve, deferred.reject);
-              delay(ms, 'timeout').then(deferred.reject);
-              return deferred.promise;
-            }
-            var patha = pathBase + "index.html";
-            //var writePromise = Write_data(patha, datadump);
-            timeout(Write_data(patha, datadump), 200).then(function(data) {
-                //Open file in tab?
-                //ui.display(data);
-                //Close old log, copy, then open new log
-                //CAEmanager.sendAsyncMessage("pageready");
-                
-            }, function() {
-                //Seems to fire regardless of status
-                //notifications.notify({
-                //    title: "CAE Job Log",
-                //    text: "Network is being too slow, try again later",
-                //    iconURL: myIconURL
-                //});
-            });
-            CAEmanagerUpdate();
-            hiddenFrames.remove(hiddenFrame);
-
-        }, true, true);
-      }
-    }));  
-}
-
-function CAEmanagerUpdate(){
-    //Copy file to user directory
-    var patha = pathBase + "index.html";
-    var pathb = OS.Path.join(UproFile, "caejobs.html");
-    //let promise = OS.File.copy(patha, pathb);
-    //var fromPath = pathBase + "caejobs.blank";
-    //var toPath = OS.Path.join(UproFile, "caejobs.html");
-    var promise = OS.File.copy(patha, pathb);
-    promise.then(
-        function(aStat) {
-            notifications.notify({
-                title: "CAE Job Log",
-                text: "Job List Updated",
-                iconURL: myIconURL
-            });
-            CAEmanager.sendAsyncMessage("pageready");
-        },
-        function(aReason) {
-            console.error('Copy blank caejobs failed, see console for details');
-            console.log('promise rejected', aReason);
-        }
-    );
-}
-
-Cu.import("resource://gre/modules/RemotePageManager.jsm");
-let CAEmanager = new RemotePages("about:caejobs");
-let Gmanager = new RemotePages("about:guy");
-let Smanager = new RemotePages("about:scott");
-let Pmanager = new RemotePages("about:paul");
-let Hmanager = new RemotePages("about:suzhou");
-
-// Communication with about:caejobs
-//update page data
-CAEmanager.addMessageListener("reloadx", function() {
-    //Reload instead of close???
-    //Close tab
-    //tabs.activeTab.close();
-    notifications.notify({
-        title: "CAE Job Log",
-        text: "Updated request submitted.",
-        iconURL: myIconURL
-    });
-    //Start process
-    updateJobs();
-});
-
-//Update print links
-CAEmanager.addMessageListener("prints", function(array) {
-    var URLarray = array.data;
-    var url = URLarray[0];
-    var part = URLarray[1];
-    if (url.includes("p_part_id")) {
-        var urlCHK = fileURL.FSdisplay(String(/[^\s]+/.exec(part)));
-        if (urlCHK != "unknown") {
-            var url_new = urlCHK;
-            var url_old = url;
-            var URLs = new Array(url_new, url_old);
-            CAEmanager.sendAsyncMessage("dPrints", URLs);
-        }
-    }
-});
-
-//update badge
-CAEmanager.addMessageListener("badge", function(state) {
-    var num = state.data;
-    cae_button.badge = num;
-    cae_button.badgeColor = "#AA00AA";
-});
-
-// Update master
-// This function does not work correctly when FF is reloaded and page data is stale
-// User records will be incorrectly unassigned if not reloaded first.
-// Disabled auto removal of not found records
-CAEmanager.addMessageListener("save", function(all_array) {
-    //console.log(all_array);
-    var ews_array = all_array.data[0],
-        owner_array = all_array.data[1],
-        ews_path = pathBase + "ews_log.txt";
-    // Save ews list
-    Write_data(ews_path, ews_array);
-    
-    // Update owner log vs user logs (already logged EWS)
-    var user;
-    for (var j=0; j < users.length; j++) {
-        user = users[j];
-        var del_array = [],
-            old_length,
-            user_log = [],
-            user_path = pathBase + user + "_log.txt",
-            user_log_str = readText(user_path);
-        if (user_log_str !== null || user_log_str !== "") {
-            user_log = user_log_str.split(",");
-            var curArray = user_log;
-            old_length = curArray.length;
-            for (var i=0; i < user_log.length; i++) {
-                var user_chk = user_log[i];
-                var location = ews_array.indexOf(user_chk);        // Check for match in EWS list
-                if (location > -1) {
-                    //console.log("RECORD FOUND " + location + " - " + user_chk);
-                    owner_array[location] = user;                               // Match found so assign
-                } else if (location == -1) {
-                    console.error("User record not found: " + user_chk);
-                    del_array.push(user_chk);
-                    //user_log.splice(user_log.indexOf(user_chk), 1);    // Not found so remove from User log (disabled)
-                }
-            }
-        }
-        if (user_log.length != old_length) {//Array changed so update users log file
-            console.log(user + " EWS log: " + old_length  + "->" + user_log.length + " [" + del_array + "]");
-            notifications.notify({
-                title: "CAE Job Log",
-                text: user + "'s log contains unmatched worksheets: \n\n" + del_array,
-                iconURL: myIconURL
-            });
-            Write_data(user_path, user_log);      
-            console.info("User log updated [" + old_length + " -> " + user_log.length + "]");
-            //console.info("Removed: " + del_array);
-        }
-    }
-    var owner_path = pathBase + "owner_log.txt";
-    Write_data(owner_path, owner_array);
-});
-
-//save data
-CAEmanager.addMessageListener("update", function(upChange) {
-    var ews = upChange.data[0];
-    var owner = upChange.data[1];
-    var log_path = pathBase + owner + "_log.txt";
-    var log = [];
-    // Read current log
-    var log_str = readText(log_path);
-    if (log_str !== null && log_str !== "") {
-        log = log_str.split(",");
-        // Add new record to log
-        log.push(ews);
-    }
-    if (log_str === null || log_str === "") {
-        // Add new record to log
-        log[0] = ews;
-    }
-
-    Write_data(log_path, log);
-    console.log(ews + " assigned to " + owner + ".");
-    //Update Badge
-    var curtotal = cae_button.badge;
-    if (curtotal !== "") {
-        cae_button.badge = curtotal-1;
-        cae_button.badgeColor = "#00aa00";
-    } else {
-        cae_button.badge = -1;
-        cae_button.badgeColor = "#00aa00";
-    }
-});
-
-//unassign
-CAEmanager.addMessageListener("unassign", function(upChange) {
-    console.log(ews + " unassigned from " + owner + ".");
-        
-    // Unassign changed record
-    var ews = upChange.data[0];
-    var owner = upChange.data[1];
-    if (owner != "none") {
-        //Retrieve log
-        var user_path = pathBase + owner + "_log.txt";
-        var user_log = readText(user_path);
-        user_log = user_log.split(",");
-        //Remove from log
-        arrdestroy(user_log,String(ews));
-        //Save new log
-        Write_data(user_path, user_log);
-        
-        //Send owner to remove value from
-        CAEmanager.sendAsyncMessage("unassignNum", owner);
-        //Update Badge
-        var curtotal = cae_button.badge;
-        cae_button.badge = curtotal+1;
-        cae_button.badgeColor = "#aa00aa";
-    }
-    function arrdestroy(arr, val) {
-        for (var i = 0; i < arr.length; i++) if (arr[i] === val) arr.splice(i, 1);
-        return arr;
-    }
-});
-
-//guy log
-CAEmanager.addMessageListener("rtn_logged_g", function(username) {
-    // Send user log to content script when requested
-    var user = username.data;
-    var guy_path = pathBase + user + "_log.txt";
-    var guy_log_str = readText(guy_path);
-    var guy_log = "";
-    if (guy_log_str !== null) {
-        guy_log = guy_log_str.split(",");
-    }
-    CAEmanager.sendAsyncMessage("userLog_g", guy_log);
-});
-
-//paul log
-CAEmanager.addMessageListener("rtn_logged_p", function(username) {
-    // Send user log to content script when requested
-    var user = username.data;
-    var paul_path = pathBase + user + "_log.txt";
-    var paul_log_str = readText(paul_path);
-    var paul_log = "";
-    if (paul_log_str !== null) {
-        paul_log = paul_log_str.split(",");
-    }
-    CAEmanager.sendAsyncMessage("userLog_p", paul_log);
-});
-
-//scott log
-CAEmanager.addMessageListener("rtn_logged_s", function(username) {
-    // Send user log to content script when requested
-    var user = username.data;
-    var scott_path = pathBase + user + "_log.txt";
-    var scott_log_str = readText(scott_path);
-    var scott_log = "";
-    if (scott_log_str !== null) {
-        scott_log = scott_log_str.split(",");
-    }
-    CAEmanager.sendAsyncMessage("userLog_s", scott_log);
-});
-
-//suzhou log
-CAEmanager.addMessageListener("rtn_logged_h", function(username) {
-    // Send user log to content script when requested
-    var user = username.data;
-    var suzhou_path = pathBase + user + "_log.txt";
-    var suzhou_log_str = readText(suzhou_path);
-    var suzhou_log = "";
-    if (suzhou_log_str !== null) {
-        suzhou_log = suzhou_log_str.split(",");
-    }
-    CAEmanager.sendAsyncMessage("userLog_h", suzhou_log);
-});
 
 
-// Communication with about:guy
-Gmanager.addMessageListener("GetNote", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data + ".txt");
-    if (file.exists(myFile) === true ) {
-        var notedata = readText(myFile);
-        var notearray = new Array(notedata, msg.data);
-        Gmanager.sendAsyncMessage("SetNote", notearray);
-    } else {
-        
-    }
-});
-Gmanager.addMessageListener("deleteNotes", function(msg) {
-    //Get array of EWS #s then loop through deleting them all
-    var guy_path = pathBase + "guy_log.txt";
-    var guy_ws_log = readText(guy_path);
-    var guy_log = "";
-    if (guy_ws_log !== null) {
-        guy_log = guy_ws_log.split(",");
-    }
-    for (var h=0; h < guy_log.length; h++) {
-        var ewsfile = OS.Path.join(UproFile, guy_log[h] + ".txt");
-        OS.File.remove(ewsfile);
-    }
-    console.log("Stored EWS notes removed.");
-});
-Gmanager.addMessageListener("SaveNote", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
-    Write_data(myFile, msg.data[1]);
-});
-Gmanager.addMessageListener("SaveSizes", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
-    Write_data(myFile, msg.data[1]);
-});
-Gmanager.addMessageListener("rtn_logged", function(username) {
-    // Send user logs to content script when requested
-    var user = username.data;
-    var guy_path = pathBase + user + "_log.txt";
-    var guy_log_str = readText(guy_path);
-    var guy_log = "";
-    if (guy_log_str !== null) {
-        guy_log = guy_log_str.split(",");
-    }
-    // For widgets
-    var filepath = OS.Path.join(UproFile, user + ".txt");
-    var guy_path2 = filepath;
-    var guyws_log = readText(guy_path2);
-    //Send user ews log & widget arrays
-    var array = new Array(guyws_log, guy_log);
-    Gmanager.sendAsyncMessage("userLog", array);
-});
-
-// Communication with about:scott
-Smanager.addMessageListener("GetNote", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data + ".txt");
-    if (file.exists(myFile) === true ) {
-        var notedata = readText(myFile);
-        var notearray = new Array(notedata, msg.data);
-        Smanager.sendAsyncMessage("SetNote", notearray);
-    }
-});
-Smanager.addMessageListener("deleteNotes", function(msg) {
-    //Get array of EWS #s then loop through deleting them all
-    var scott_path = pathBase + "scott_log.txt";
-    var scott_ws_log = readText(scott_path);
-    var scott_log = "";
-    if (scott_ws_log !== null) {
-        scott_log = scott_ws_log.split(",");
-    }
-    for (var h=0; h < scott_log.length; h++) {
-        var ewsfile = OS.Path.join(UproFile, scott_log[h] + ".txt");
-        OS.File.remove(ewsfile);
-    }
-    console.log("Stored EWS notes removed.");
-});
-Smanager.addMessageListener("SaveNote", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
-    Write_data(myFile, msg.data[1]);
-});
-Smanager.addMessageListener("SaveSizes", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
-    Write_data(myFile, msg.data[1]);
-});
-Smanager.addMessageListener("rtn_logged", function(username) {
-    // Send user logs to content script when requested
-    var user = username.data;
-    var scott_path = pathBase + user + "_log.txt";
-    var scott_log_str = readText(scott_path);
-    var scott_log = "";
-    if (scott_log_str !== null) {
-        scott_log = scott_log_str.split(",");
-    }
-    // For widgets
-    var filepath = OS.Path.join(UproFile, user + ".txt");
-    var scott_path2 = filepath;
-    var scottws_log = readText(scott_path2);
-    //Send user ews log & widget arrays
-    var array = new Array(scottws_log, scott_log);
-    Smanager.sendAsyncMessage("userLog", array);
-});
-
-// Communication with about:paul
-Pmanager.addMessageListener("GetNote", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data + ".txt");
-    if (file.exists(myFile) === true ) {
-        var notedata = readText(myFile);
-        var notearray = new Array(notedata, msg.data);
-        Pmanager.sendAsyncMessage("SetNote", notearray);
-    }
-});
-Pmanager.addMessageListener("deleteNotes", function(msg) {
-    //Get array of EWS #s then loop through deleting them all
-    var paul_path = pathBase + "paul_log.txt";
-    var paul_ws_log = readText(paul_path);
-    var paul_log = "";
-    if (paul_ws_log !== null) {
-        paul_log = paul_ws_log.split(",");
-    }
-    for (var h=0; h < paul_log.length; h++) {
-        var ewsfile = OS.Path.join(UproFile, paul_log[h] + ".txt");
-        OS.File.remove(ewsfile);
-    }
-    console.log("Stored EWS notes removed.");
-});
-Pmanager.addMessageListener("SaveNote", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
-    Write_data(myFile, msg.data[1]);
-});
-Pmanager.addMessageListener("SaveSizes", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
-    Write_data(myFile, msg.data[1]);
-});
-Pmanager.addMessageListener("rtn_logged", function(username) {
-    // Send user logs to content script when requested
-    var user = username.data;
-    var paul_path = pathBase + user + "_log.txt";
-    var paul_log_str = readText(paul_path);
-    var paul_log = "";
-    if (paul_log_str !== null) {
-        paul_log = paul_log_str.split(",");
-    }
-    // For widgets
-    var filepath = OS.Path.join(UproFile, user + ".txt");
-    var paul_path2 = filepath;
-    var paulws_log = readText(paul_path2);
-    //Send user ews log & widget arrays
-    var array = new Array(paulws_log, paul_log);
-    Pmanager.sendAsyncMessage("userLog", array);
-});
-
-// Communication with about:suzhou
-Hmanager.addMessageListener("GetNote", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data + ".txt");
-    if (file.exists(myFile) === true ) {
-        var notedata = readText(myFile);
-        var notearray = new Array(notedata, msg.data);
-        Hmanager.sendAsyncMessage("SetNote", notearray);
-    }
-});
-Hmanager.addMessageListener("deleteNotes", function(msg) {
-    //Get array of EWS #s then loop through deleting them all
-    var suzhou_path = pathBase + "suzhou_log.txt";
-    var suzhou_ws_log = readText(suzhou_path);
-    var suzhou_log = "";
-    if (suzhou_ws_log !== null) {
-        suzhou_log = suzhou_ws_log.split(",");
-    }
-    for (var h=0; h < suzhou_log.length; h++) {
-        var ewsfile = OS.Path.join(UproFile, suzhou_log[h] + ".txt");
-        OS.File.remove(ewsfile);
-    }
-    console.log("Stored EWS notes removed.");
-});
-Hmanager.addMessageListener("SaveNote", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
-    Write_data(myFile, msg.data[1]);
-});
-Hmanager.addMessageListener("SaveSizes", function(msg) {
-    var myFile = OS.Path.join(UproFile, msg.data[0] + ".txt");
-    Write_data(myFile, msg.data[1]);
-});
-Hmanager.addMessageListener("rtn_logged", function(username) {
-    // Send user logs to content script when requested
-    var user = username.data;
-    var suzhou_path = pathBase + user + "_log.txt";
-    var suzhou_log_str = readText(suzhou_path);
-    var suzhou_log = "";
-    if (suzhou_log_str !== null) {
-        suzhou_log = suzhou_log_str.split(",");
-    }
-    // For widgets
-    var filepath = OS.Path.join(UproFile, user + ".txt");
-    var suzhou_path2 = filepath;
-    var suzhouws_log = readText(suzhou_path2);
-    //Send user ews log & widget arrays
-    var array = new Array(suzhouws_log, suzhou_log);
-    Hmanager.sendAsyncMessage("userLog", array);
-});
-
-// Preferences
-//var prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
 
 //Create empty note log files if they do not exist, writeatomic error without if statements
-if (file.exists(UproFile, "guy.txt") === false ) {
-    dfCHK(OS.Path.join(UproFile, "guy.txt"));
+function createBlank(user) {
+    if (file.exists(UproFile, user + ".txt") === false ) {
+        dfCHK(OS.Path.join(UproFile, user + ".txt"));
+    }
 }
-if (file.exists(UproFile, "scott.txt") === false ) {
-    dfCHK(OS.Path.join(UproFile, "scott.txt"));
-}
-if (file.exists(UproFile, "paul.txt") === false ) {
-    dfCHK(OS.Path.join(UproFile, "paul.txt"));
-}
-if (file.exists(UproFile, "suzhou.txt") === false ) {
-    dfCHK(OS.Path.join(UproFile, "suzhou.txt"));
-}
-if (file.exists(UproFile, "caejobs.html") === false ) {
-    dfCHK(OS.Path.join(UproFile, "caejobs.html"));
-}
-// dfCHK(OS.Path.join(UproFile, "scott.txt"));
-// dfCHK(OS.Path.join(UproFile, "paul.txt"));
-// dfCHK(OS.Path.join(UproFile, "suzhou.txt"));
-// dfCHK(OS.Path.join(UproFile, "guy.txt"));
-// dfCHK(OS.Path.join(UproFile, "caejobs.html"));
-// Blank caejobs file is copied from dfCHK function
-
+createBlank(users[0]);
+createBlank(users[1]);
+createBlank(users[2]);
+createBlank(users[3]);
 
 var cae_button = ToggleButton({
   id: "cae-Jobs",
@@ -729,10 +276,6 @@ function handleHide() {
   cae_panel.hide();
 }
 
-//function handleClick(state) {
-//  tabs.open("http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL");
-//}
-
 // Page mod for EWS pages
 pageMod.PageMod({
     include: "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=EWS*",
@@ -741,25 +284,25 @@ pageMod.PageMod({
     onAttach: function(worker) {
         // Send user logs to content script when requested
         worker.port.once("rtn_logged", function() {
-            var g_path = pathBase + "guy_log.txt";
+            var g_path = pathBase + users[0] + "_log.txt";
             var g_log_str = readText(g_path);
             var g_log = "";
             if (g_log_str !== null) {
                 g_log = g_log_str.split(",");
             }
-            var s_path = pathBase + "scott_log.txt";
+            var s_path = pathBase + users[1] + "_log.txt";
             var s_log_str = readText(s_path);
             var s_log = "";
             if (s_log_str !== null) {
                 s_log = s_log_str.split(",");
             }
-            var p_path = pathBase + "paul_log.txt";
+            var p_path = pathBase + users[2] + "_log.txt";
             var p_log_str = readText(p_path);
             var p_log = "";
             if (p_log_str !== null) {
                 p_log = p_log_str.split(",");
             }
-            var h_path = pathBase + "suzhou_log.txt";
+            var h_path = pathBase + users[3] + "_log.txt";
             var h_log_str = readText(h_path);
             var h_log = "";
             if (h_log_str !== null) {
@@ -779,6 +322,10 @@ pageMod.PageMod({
 // Page mod for CAEJobs page
 pageMod.PageMod({
     include: "about:caejobs",
+    contentScriptWhen: 'end',
+    contentScriptFile: ["./lib/jquery-2.1.4.js",
+                      "./lib/jquery.tablesorter.js",
+                      "./js/caejobs.js"],
     onAttach: function(worker) {
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
@@ -805,6 +352,352 @@ pageMod.PageMod({
         worker.on('detach', function () {
             cae_menuItem.destroy();
         });
+        
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:reloadx', function () {
+            notifications.notify({
+                title: "CAE Job Log",
+                text: "Updated request submitted.",
+                iconURL: myIconURL
+            });
+            updateJobs();            //Start update process
+        });
+        
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:prints', function (message) {
+            //var URLarray = array.data;
+            var url = message[0];
+            var part = message[1];
+            if (url.includes("p_part_id")) {
+                var urlCHK = fileURL.FSdisplay(String(/[^\s]+/.exec(part)));
+                if (urlCHK != "unknown") {
+                    var url_new = urlCHK;
+                    var url_old = url;
+                    var URLs = new Array(url_new, url_old);
+                    worker.port.emit("CAEJobLog-at-tenneco-dot-com:dPrints", URLs);
+                }
+            }
+        });
+        
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:badge', function (state) {
+            var num = state;
+            cae_button.badge = num;
+            cae_button.badgeColor = "#AA00AA";
+        });
+        
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:save', function (all_array) {
+            var ews_array = all_array[0],
+                owner_array = all_array[1],
+                ews_path = pathBase + "ews_log.txt";
+            Write_data(ews_path, ews_array);            // Save ews list locally
+            
+            // Update owner log vs user logs (already logged EWS)
+            var user;
+            for (var j=0; j < users.length; j++) {
+                user = users[j];
+                var del_array = [],
+                    old_length,
+                    user_log = [],
+                    user_path = pathBase + user + "_log.txt",
+                    user_log_str = readText(user_path);
+                if (user_log_str !== null || user_log_str !== "") {
+                    user_log = user_log_str.split(",");
+                    var curArray = user_log;
+                    old_length = curArray.length;
+                    for (var i=0; i < user_log.length; i++) {
+                        var user_chk = user_log[i];
+                        var location = ews_array.indexOf(user_chk);        // Check for match in EWS list
+                        if (location > -1) {
+                            //console.log("RECORD FOUND " + location + " - " + user_chk);
+                            owner_array[location] = user;                               // Match found so assign
+                        } else if (location == -1) {
+                            console.error("User record not found: " + user_chk);
+                            del_array.push(user_chk);
+                            //user_log.splice(user_log.indexOf(user_chk), 1);    // Not found so remove from User log (disabled)
+                        }
+                    }
+                }
+                if (user_log.length != old_length) {//Array changed so update users log file
+                    console.log(user + " EWS log: " + old_length  + "->" + user_log.length + " [" + del_array + "]");
+                    notifications.notify({
+                        title: "CAE Job Log",
+                        text: user + "'s log contains unmatched worksheets: \n\n" + del_array,
+                        iconURL: myIconURL
+                    });
+                    Write_data(user_path, user_log);      
+                    console.info("User log updated [" + old_length + " -> " + user_log.length + "]");
+                    //console.info("Removed: " + del_array);
+                }
+            }
+            var owner_path = pathBase + "owner_log.txt";
+            Write_data(owner_path, owner_array);
+        });
+        
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:update', function (upChange) {
+            var ews = upChange[0];
+            var owner = upChange[1];
+            var log_path = pathBase + owner + "_log.txt";
+            var log = [];
+            // Read current log
+            var log_str = readText(log_path);
+            if (log_str !== null && log_str !== "") {
+                log = log_str.split(",");
+                // Check if record already exists in log
+                var location = log.indexOf(ews);        // Check for match in user EWS list
+                if (location > -1) {
+                    console.error(ews + " is already assigned to " + owner);
+                } else if (location == -1) {
+                    log.push(ews);               // Add new record to log array
+                    console.log(ews + " assigned to " + owner + ".");
+                }
+
+            }
+            if (log_str === null || log_str === "") {
+                // Add new record to log
+                log[0] = ews;
+                console.log(ews + " assigned to " + owner + ".");
+            }
+
+            Write_data(log_path, log);      //Save data to file locally J:
+            // Save user ews log to server
+            Request({
+                url: "http://tamilan.na.ten/cae/Joblog-backend/handler.php",
+                content: { 
+                    Username: owner,
+                    EWSArray: log,
+                    },
+                onComplete: function (response) {
+                    console.log( response.text );
+                }
+            }).post();    
+
+            //Update Badge
+            var curtotal = cae_button.badge;
+            if (curtotal !== "") {
+                cae_button.badge = curtotal-1;
+                cae_button.badgeColor = "#00aa00";
+            } else {
+                cae_button.badge = -1;
+                cae_button.badgeColor = "#00aa00";
+            }
+        });
+        
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:unassign', function (upChange) {
+            console.log(ews + " unassigned from " + owner + ".");
+                
+            // Unassign changed record
+            var ews = upChange[0];
+            var owner = upChange[1];
+            if (owner != "none") {
+                //Retrieve log
+                var user_path = pathBase + owner + "_log.txt";
+                var user_log = readText(user_path);
+                user_log = user_log.split(",");
+                //Remove from log
+                arrdestroy(user_log,String(ews));
+                //Save new log
+                Write_data(user_path, user_log);
+                
+                //Send owner to remove value from
+                worker.port.emit("CAEJobLog-at-tenneco-dot-com:unassignNum", owner);
+                //Update Badge
+                var curtotal = cae_button.badge;
+                cae_button.badge = curtotal+1;
+                cae_button.badgeColor = "#aa00aa";
+            }
+            function arrdestroy(arr, val) {
+                for (var i = 0; i < arr.length; i++) if (arr[i] === val) arr.splice(i, 1);
+                return arr;
+            }
+        });
+        
+        // worker.port.on('CAEJobLog-at-tenneco-dot-com:rtn_logged', function (message) {
+            // // Send user log to content script when requested
+            // var user = message;
+            // var user_path = pathBase + user + "_log.txt";
+            // var user_log_str = readText(user_path);
+            // var user_log = "";
+            // if (user_log_str !== null) {
+                // user_log = user_log_str.split(",");
+            // }
+            // // For widgets
+            // var filepath = OS.Path.join(UproFile, user + ".txt");
+            // var guy_path2 = filepath;
+            // var guyws_log = readText(guy_path2);
+            // //Send user ews log & widget arrays
+            // var array = new Array(guyws_log, user_log);
+            // var userIndex = users.indexOf(user);
+            // worker.port.emit("CAEJobLog-at-tenneco-dot-com:userLog_" + userIndex, array);
+        // });
+        
+        worker.port.on("CAEJobLog-at-tenneco-dot-com:clearCompleted", function() {
+            // Update user logs for completed/closed jobs (jobs not in ews_array)
+            var user;
+            for (var j=0; j < users.length; j++) {
+                user = users[j];
+                var del_array = [],
+                    old_length,
+                    user_log = [],
+                    user_path = pathBase + user + "_log.txt",
+                    user_log_str = readText(user_path),
+                    ews_path = pathBase + "ews_log.txt",
+                    ews_log_str = readText(ews_path),
+                    ews_array = ews_log_str.split(",");
+                if (user_log_str !== null || user_log_str !== "") {
+                    user_log = user_log_str.split(",");
+                    var curArray = user_log;
+                    old_length = curArray.length;
+                    for (var i=0; i < user_log.length; i++) {
+                        var user_chk = user_log[i];
+                        var location = ews_array.indexOf(user_chk);        // Check for match in EWS list
+                        if (location == -1) {
+                        console.error(user_chk + " not found in active EWS list. [" + users[j] + "]");
+                            del_array.push(user_chk);
+                        }
+                    }
+                }
+                //Remove completed jobs
+                for (var h=0; h < del_array.length; h++) {
+                    user_log.splice(user_log.indexOf(del_array[h]), 1);
+                }
+                if (user_log.length != old_length) {//Array changed so update users log file
+                    Write_data(user_path, user_log);  
+                    console.log(user + "'s EWS log updated from " + old_length + " to " + user_log.length + " records.  [-" + del_array + "]");
+                } 
+            } 
+        });
+                
+        function updateJobs() {
+            var hiddenFrames = require("sdk/frame/hidden-frame");
+            var instance = Cc["@mozilla.org/moz/jssubscript-loader;1"];
+            var loader = instance.getService(Ci.mozIJSSubScriptLoader);
+
+            function loadScript(url) {
+                loader.loadSubScript(url);
+            }
+            loadScript("resource://CAEJobLog-at-tenneco-dot-com/data/js/retrieveTable.js");
+            
+            let hiddenFrame = hiddenFrames.add(hiddenFrames.HiddenFrame({
+              onReady: function() {
+                this.element.contentWindow.location = "http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No";
+                let self = this;
+                this.element.addEventListener("DOMContentLoaded", function() {
+                    var datadump = refreshInformation(self.element.contentDocument);
+                    //console.log(datadump);
+
+                    //Temp open table in tab
+                    //function delay(ms, value) {
+                    // let { promise, resolve } = defer();
+                    //  setTimeout(resolve, ms, value);
+                    //  return promise;
+                    //}
+
+                    //function timeout(promise, ms) {
+                    //  let deferred = defer();
+                    //  promise.then(deferred.resolve, deferred.reject);
+                    //  delay(ms, 'timeout').then(deferred.reject);
+                    //  return deferred.promise;
+                    //}
+                    //var patha = UproFile + "table.json";
+                    //timeout(Write_data(patha, datadump), 200).then(function(data) {
+                        //Open file in tab?
+                        //ui.display(data);
+                        //Close old log, copy, then open new log
+                        //CAEmanager.sendAsyncMessage("pageready");
+                    //}, function() {
+                        //Seems to fire regardless of status
+                        //notifications.notify({
+                        //    title: "CAE Job Log",
+                        //    text: "Network is being too slow, try again later",
+                        //    iconURL: myIconURL
+                        //});
+                    //});
+                    //CAEmanagerUpdate();
+                    hiddenFrames.remove(hiddenFrame);
+                    worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageprep");
+                    
+                    //Check assigned status before sending to caejobs by loading user logs to arrays
+                    var user_arrays = []
+                    for (var j=0; j < users.length; j++) {
+                        var user = users[j];
+                        var user_path = pathBase + user + "_log.txt";
+                        var user_log_str = readText(user_path);
+                        if (user_log_str !== null) {
+                            //var user_log = user_log_str.split(",");
+                            user_arrays.push(user_log_str.split(","));
+                        }
+                    }
+                    
+                    var str = '';
+                    var array = JSON.parse(datadump);
+                    for (var i = 0; i < array.length; i++) {
+                        var ews = array[i].EWS;
+                        var bu = array[i].BU;
+                        var pn = array[i].PartNo;
+                        var sub = array[i].Submit;
+                        //var cae = array[i].CAE;  //TO BE REMOVED
+                        var assigned;
+                        //console.log(obj);
+                        for (var r=0; r < user_arrays.length; r++) { //for each user log array
+                            for (var p=0; p < user_arrays[r].length; p++) { //for each ews from each user
+                                if (user_arrays[r][p] == ews) { 
+                                    //assigned
+                                    assigned = users[r];
+                                } else {
+                                    //not assigned (do nothing)
+                                }
+                            } 
+                        }
+                        if (typeof assigned === 'undefined' || assigned === null) {
+                            str += '<tr id="'+ ews + '" class="dnd border-fade wobble-horizontal" draggable="true">';
+                            str += '<td>' + ews + '</td>';
+                            str += '<td>' + bu + '</td>';
+                            str += '<td>' + pn + '</td>';
+                            str += '<td>' + sub + '</td>';
+                            //str += '<td>' + cae + '</td>';  //TO BE REMOVED
+                            str += '<td>None</td>';
+                            str += '</tr>';
+                        } else {
+                            str += '<tr id="'+ ews + '" class="dnd border-fade wobble-horizontal ' + assigned +'" draggable="true">';
+                            str += '<td>' + ews + '</td>';
+                            str += '<td>' + bu + '</td>';
+                            str += '<td>' + pn + '</td>';
+                            str += '<td>' + sub + '</td>';
+                            //str += '<td>' + cae + '</td>';  //TO BE REMOVED
+                            str += '<td>' + assigned + '</td>';
+                            str += '</tr>';
+                        }
+                    }
+                    worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageUpdate", str);
+                    //}
+
+                    //worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageUpdate", datadump);
+
+                }, true, true);
+              }
+            }));  
+        }
+
+        //function CAEmanagerUpdate(){
+            //Copy file to user directory
+            //var patha = pathBase + "index.html";
+            //var pathb = OS.Path.join(UproFile, "caejobs.html");
+            //var promise = OS.File.copy(patha, pathb);
+            //promise.then(
+                //function(aStat) {
+                    //notifications.notify({
+                        //title: "CAE Job Log",
+                        //text: "Job List Updated",
+                        //iconURL: myIconURL
+                    //});
+                    //CHANGE TO LOAD JSON
+                    //worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageprep");
+                    //worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageready");
+                //},
+                //function(aReason) {
+                //    console.error('Copy blank caejobs failed, see console for details');
+                //    console.log('promise rejected', aReason);
+                //}
+            //);
+        //}
 
         function unassign(upChange) {
             var parsedupChange = JSON.parse(upChange);
@@ -823,7 +716,7 @@ pageMod.PageMod({
                 console.log(ews + " unassigned from " + owner + ".");
                 
                 //Send owner to remove value from;
-                worker.port.emit("unassignNum", owner);
+                worker.port.emit("CAEJobLog-at-tenneco-dot-com:unassignNum", owner);
                 //Update Badge
                 var curtotal = cae_button.badge;
                 if (curtotal !== "") {
@@ -859,15 +752,21 @@ function unassignUSER(upChange) {
         return arr;
     }
 }
+
 pageMod.PageMod({
-    include: "about:guy",
+    include: "about:" + users[0],
+    contentScriptWhen: 'end',
+    contentScriptFile: ["./lib/jquery-2.1.4.js",
+                      "./lib/jquery-ui.min.js",
+                      "./lib/jquery.gridster.js",
+                      "./js/joblog_guy.js"],
     onAttach: function(worker) {
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
-            context: [cm.SelectorContext("a"), cm.URLContext("about:guy")],
+            context: [cm.SelectorContext("a"), cm.URLContext("about:" + users[0])],
             image: self.data.url("./uEWS.png"),
             contentScript: 'self.on("click", function (node) {' +
-                         '  var owner = "guy",' +
+                         '  var owner = "' + users[0] + '",' +
                          '      ews = node.textContent,' +
                          '      upChange = JSON.stringify({' +
                          '  ews: ews,' +
@@ -881,20 +780,75 @@ pageMod.PageMod({
             }
         });
         
-        worker.on('detach', function () {
+        worker.port.on('detach', function () {
             cae_menuItem.destroy();
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:rtn_logged', function (message) {
+            // Send user log to content script when requested
+            var user = message;
+            var user_path = pathBase + user + "_log.txt";
+            var user_log_str = readText(user_path);
+            var user_log = "";
+            if (user_log_str !== null) {
+                user_log = user_log_str.split(",");
+            }
+            // For widgets
+            var filepath = OS.Path.join(UproFile, user + ".txt");
+            var guy_path2 = filepath;
+            var guyws_log = readText(guy_path2);
+            //Send user ews log & widget arrays
+            var array = new Array(guyws_log, user_log);
+            var userIndex = users.indexOf(user);
+            worker.port.emit("CAEJobLog-at-tenneco-dot-com:userLog_" + userIndex, array);
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:GetNote', function (msg) {
+            var myFile = OS.Path.join(UproFile, msg + ".txt");
+            if (file.exists(myFile) === true ) {
+                var notedata = readText(myFile);
+                var notearray = new Array(notedata, msg);
+                worker.port.emit("CAEJobLog-at-tenneco-dot-com:SetNote", notearray);
+            }
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:SaveSizes', function (message) {
+            var myFile = OS.Path.join(UproFile, message[0] + ".txt");
+            Write_data(myFile, message[1]);
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:deleteNotes', function (message) {
+            //Get array of EWS #s then loop through deleting them all
+            var user = message;
+            var user_path = pathBase + user + "_log.txt";
+            var user_ws_log = readText(user_path);
+            var user_log = "";
+            if (user_ws_log !== null) {
+                user_log = user_ws_log.split(",");
+            }
+            for (var h=0; h < user_log.length; h++) {
+                var ewsfile = OS.Path.join(UproFile, user_log[h] + ".txt");
+                OS.File.remove(ewsfile);
+            }
+            console.log("Stored EWS notes removed.");
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:SaveNote', function (message) {
+            var myFile = OS.Path.join(UproFile, message[0] + ".txt");
+            Write_data(myFile, message[1]);
         });
     }
 });
+
 pageMod.PageMod({
-    include: "about:scott",
+    include: "about:" + users[1],
+    contentScriptWhen: 'end',
+    contentScriptFile: ["./lib/jquery-2.1.4.js",
+                      "./lib/jquery-ui.min.js",
+                      "./lib/jquery.gridster.js",
+                      "./js/joblog_scott.js"],
     onAttach: function(worker) {
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
-            context: [cm.SelectorContext("a"), cm.URLContext("about:scott")],
+            context: [cm.SelectorContext("a"), cm.URLContext("about:" + users[1])],
             image: self.data.url("./uEWS.png"),
             contentScript: 'self.on("click", function (node) {' +
-                         '  var owner = "scott",' +
+                         '  var owner = "' + users[1] + '",' +
                          '      ews = node.textContent,' +
                          '      upChange = JSON.stringify({' +
                          '  ews: ews,' +
@@ -908,20 +862,75 @@ pageMod.PageMod({
             }
         });
         
-        worker.on('detach', function () {
+        worker.port.on('detach', function () {
             cae_menuItem.destroy();
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:rtn_logged', function (message) {
+            // Send user log to content script when requested
+            var user = message;
+            var user_path = pathBase + user + "_log.txt";
+            var user_log_str = readText(user_path);
+            var user_log = "";
+            if (user_log_str !== null) {
+                user_log = user_log_str.split(",");
+            }
+            // For widgets
+            var filepath = OS.Path.join(UproFile, user + ".txt");
+            var scott_path2 = filepath;
+            var scottws_log = readText(scott_path2);
+            //Send user ews log & widget arrays
+            var array = new Array(scottws_log, user_log);
+            var userIndex = users.indexOf(user);
+            worker.port.emit("CAEJobLog-at-tenneco-dot-com:userLog_" + userIndex, array);
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:GetNote', function (msg) {
+            var myFile = OS.Path.join(UproFile, msg + ".txt");
+            if (file.exists(myFile) === true ) {
+                var notedata = readText(myFile);
+                var notearray = new Array(notedata, msg);
+                worker.port.emit("CAEJobLog-at-tenneco-dot-com:SetNote", notearray);
+            }
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:SaveSizes', function (message) {
+            var myFile = OS.Path.join(UproFile, message[0] + ".txt");
+            Write_data(myFile, message[1]);
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:deleteNotes', function (message) {
+            //Get array of EWS #s then loop through deleting them all
+            var user = message;
+            var user_path = pathBase + user + "_log.txt";
+            var user_ws_log = readText(user_path);
+            var user_log = "";
+            if (user_ws_log !== null) {
+                user_log = user_ws_log.split(",");
+            }
+            for (var h=0; h < user_log.length; h++) {
+                var ewsfile = OS.Path.join(UproFile, user_log[h] + ".txt");
+                OS.File.remove(ewsfile);
+            }
+            console.log("Stored EWS notes removed.");
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:SaveNote', function (message) {
+            var myFile = OS.Path.join(UproFile, message[0] + ".txt");
+            Write_data(myFile, message[1]);
         });
     }
 });
+
 pageMod.PageMod({
-    include: "about:paul",
+    include: "about:" + users[2],
+    contentScriptWhen: 'end',
+    contentScriptFile: ["./lib/jquery-2.1.4.js",
+                      "./lib/jquery-ui.min.js",
+                      "./lib/jquery.gridster.js",
+                      "./js/joblog_paul.js"],
     onAttach: function(worker) {
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
-            context: [cm.SelectorContext("a"), cm.URLContext("about:paul")],
+            context: [cm.SelectorContext("a"), cm.URLContext("about:" + users[2])],
             image: self.data.url("./uEWS.png"),
             contentScript: 'self.on("click", function (node) {' +
-                         '  var owner = "paul",' +
+                         '  var owner = "' + users[2] + '",' +
                          '      ews = node.textContent,' +
                          '      upChange = JSON.stringify({' +
                          '  ews: ews,' +
@@ -935,20 +944,75 @@ pageMod.PageMod({
             }
         });
         
-        worker.on('detach', function () {
+        worker.port.on('detach', function () {
             cae_menuItem.destroy();
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:rtn_logged', function (message) {
+            // Send user log to content script when requested
+            var user = message;
+            var user_path = pathBase + user + "_log.txt";
+            var user_log_str = readText(user_path);
+            var user_log = "";
+            if (user_log_str !== null) {
+                user_log = user_log_str.split(",");
+            }
+            // For widgets
+            var filepath = OS.Path.join(UproFile, user + ".txt");
+            var paul_path2 = filepath;
+            var paulws_log = readText(paul_path2);
+            //Send user ews log & widget arrays
+            var array = new Array(paulws_log, user_log);
+            var userIndex = users.indexOf(user);
+            worker.port.emit("CAEJobLog-at-tenneco-dot-com:userLog_" + userIndex, array);
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:GetNote', function (msg) {
+            var myFile = OS.Path.join(UproFile, msg + ".txt");
+            if (file.exists(myFile) === true ) {
+                var notedata = readText(myFile);
+                var notearray = new Array(notedata, msg);
+                worker.port.emit("CAEJobLog-at-tenneco-dot-com:SetNote", notearray);
+            }
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:SaveSizes', function (message) {
+            var myFile = OS.Path.join(UproFile, message[0] + ".txt");
+            Write_data(myFile, message[1]);
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:deleteNotes', function (message) {
+            //Get array of EWS #s then loop through deleting them all
+            var user = message;
+            var user_path = pathBase + user + "_log.txt";
+            var user_ws_log = readText(user_path);
+            var user_log = "";
+            if (user_ws_log !== null) {
+                user_log = user_ws_log.split(",");
+            }
+            for (var h=0; h < user_log.length; h++) {
+                var ewsfile = OS.Path.join(UproFile, user_log[h] + ".txt");
+                OS.File.remove(ewsfile);
+            }
+            console.log("Stored EWS notes removed.");
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:SaveNote', function (message) {
+            var myFile = OS.Path.join(UproFile, message[0] + ".txt");
+            Write_data(myFile, message[1]);
         });
     }
 });
+
 pageMod.PageMod({
-    include: "about:suzhou",
+    include: "about:" + users[3],
+    contentScriptWhen: 'end',
+    contentScriptFile: ["./lib/jquery-2.1.4.js",
+                      "./lib/jquery-ui.min.js",
+                      "./lib/jquery.gridster.js",
+                      "./js/joblog_suzhou.js"],
     onAttach: function(worker) {
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
-            context: [cm.SelectorContext("a"), cm.URLContext("about:suzhou")],
+            context: [cm.SelectorContext("a"), cm.URLContext("about:" + users[3])],
             image: self.data.url("./uEWS.png"),
             contentScript: 'self.on("click", function (node) {' +
-                         '  var owner = "suzhou",' +
+                         '  var owner = "' + users[3] + '",' +
                          '      ews = node.textContent,' +
                          '      upChange = JSON.stringify({' +
                          '  ews: ews,' +
@@ -962,8 +1026,57 @@ pageMod.PageMod({
             }
         });
         
-        worker.on('detach', function () {
+        worker.port.on('detach', function () {
             cae_menuItem.destroy();
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:rtn_logged', function (message) {
+            // Send user log to content script when requested
+            var user = message;
+            var user_path = pathBase + user + "_log.txt";
+            var user_log_str = readText(user_path);
+            var user_log = "";
+            if (user_log_str !== null) {
+                user_log = user_log_str.split(",");
+            }
+            // For widgets
+            var filepath = OS.Path.join(UproFile, user + ".txt");
+            var suzhou_path2 = filepath;
+            var suzhouws_log = readText(suzhou_path2);
+            //Send user ews log & widget arrays
+            var array = new Array(suzhouws_log, user_log);
+            var userIndex = users.indexOf(user);
+            worker.port.emit("CAEJobLog-at-tenneco-dot-com:userLog_" + userIndex, array);
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:GetNote', function (msg) {
+            var myFile = OS.Path.join(UproFile, msg + ".txt");
+            if (file.exists(myFile) === true ) {
+                var notedata = readText(myFile);
+                var notearray = new Array(notedata, msg);
+                worker.port.emit("CAEJobLog-at-tenneco-dot-com:SetNote", notearray);
+            }
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:SaveSizes', function (message) {
+            var myFile = OS.Path.join(UproFile, message[0] + ".txt");
+            Write_data(myFile, message[1]);
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:deleteNotes', function (message) {
+            //Get array of EWS #s then loop through deleting them all
+            var user = message;
+            var user_path = pathBase + user + "_log.txt";
+            var user_ws_log = readText(user_path);
+            var user_log = "";
+            if (user_ws_log !== null) {
+                user_log = user_ws_log.split(",");
+            }
+            for (var h=0; h < user_log.length; h++) {
+                var ewsfile = OS.Path.join(UproFile, user_log[h] + ".txt");
+                OS.File.remove(ewsfile);
+            }
+            console.log("Stored EWS notes removed.");
+        });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:SaveNote', function (message) {
+            var myFile = OS.Path.join(UproFile, message[0] + ".txt");
+            Write_data(myFile, message[1]);
         });
     }
 });
@@ -1042,51 +1155,43 @@ function Write_data(name, data){
     return deferred.promise;
 }
 
-//Obsolete function
-//function getLocalDirectory () { 
-//    let directoryService = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties); 
-//    let localDir = directoryService.get("ProfD", Ci.nsIFile); 
-//    localDir.append("CAEwidgets");
-//    //console.log(localDir.path);
-//    if (!localDir.exists() || !localDir.isDirectory())  
-//        localDir.create(Ci.nsIFile.DIRECTORY_TYPE, parseInt("0774", 8)); 
-//    return localDir; 
-//}
+Cm.QueryInterface(Ci.nsIComponentRegistrar);
 
+// globals
+var factory;
+const aboutCAEJobsDescription = 'About CAE Jobs';
+const aboutCAEJobsUUID = 'bf031960-0ac3-11e5-b939-0800200c9a66';
+const aboutCAEJobs_word = 'caejobs';
+//const aboutCAEJobs_page = OS.Path.toFileURI(OS.Path.join(UproFile, 'caejobs.html'));
+const aboutCAEJobs_page = "resource://CAEJobLog-at-tenneco-dot-com/data/caejobs.html";
+//FIX me
+//NEED TABLE DATA IN JSON FORMAT TO USE STATIC CAEJOBS PAGE
 
-// about constants
-const aboutPaulContract = "@mozilla.org/network/protocol/about;1?what=paul";
-const aboutPaulDescription = "About Paul";
-const aboutPaulUUID = components.ID("b0b3af10-d3b3-11e4-8830-0800200c9a66");
+const about0Description = "About " + users[0];
+const about0UUID = "b4c22650-df83-11e4-8830-0800200c9a66";
+const about0_word = users[0];
+const about0_page = "resource://CAEJobLog-at-tenneco-dot-com/data/" + users[0] + ".html";
 
-const aboutGuyContract = "@mozilla.org/network/protocol/about;1?what=guy";
-const aboutGuyDescription = "About Guy";
-const aboutGuyUUID = components.ID("b4c22650-df83-11e4-8830-0800200c9a66");
+const about1Description = "About " + users[1];
+const about1UUID = "b4c22651-df83-11e4-8830-0800200c9a66";
+const about1_word = users[1];
+const about1_page = "resource://CAEJobLog-at-tenneco-dot-com/data/" + users[1] + ".html";
 
-const aboutScottContract = "@mozilla.org/network/protocol/about;1?what=scott";
-const aboutScottDescription = "About Scott";
-const aboutScottUUID = components.ID("b4c22651-df83-11e4-8830-0800200c9a66");
+const about2Description = "About " + users[2];
+const about2UUID = "b0b3af10-d3b3-11e4-8830-0800200c9a66";
+const about2_word = users[2];
+const about2_page = "resource://CAEJobLog-at-tenneco-dot-com/data/" + users[2] + ".html";
 
-const aboutSuzhouContract = "@mozilla.org/network/protocol/about;1?what=suzhou";
-const aboutSuzhouDescription = "About Suzhou";
-const aboutSuzhouUUID = components.ID("b4c22652-df83-11e4-8830-0800200c9a66");
+const about3Description = "About " + users[3];
+const about3UUID = "b4c22652-df83-11e4-8830-0800200c9a66";
+const about3_word = users[3];
+const about3_page = "resource://CAEJobLog-at-tenneco-dot-com/data/" + users[3] + ".html";
 
-const aboutCAEJobsContract = "@mozilla.org/network/protocol/about;1?what=caejobs";
-const aboutCAEJobsDescription = "About CAE Jobs";
-const aboutCAEJobsUUID = components.ID("bf031960-0ac3-11e5-b939-0800200c9a66");
-
-// about:paul factory
-let aboutPaulFactory = {
-    createInstance: function(outer, iid) {
-        if (outer !== null)
-            throw Cr.NS_ERROR_NO_AGGREGATION;
-
-        return aboutPaul.QueryInterface(iid);
-    }
-};
-
-// about:paul
-let aboutPaul = {
+function AboutCAEJobs() {}
+AboutCAEJobs.prototype = Object.freeze({
+    classDescription: aboutCAEJobsDescription,
+    contractID: '@mozilla.org/network/protocol/about;1?what=' + aboutCAEJobs_word,
+    classID: components.ID('{' + aboutCAEJobsUUID + '}'),
     QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
 
     getURIFlags: function(aURI) {
@@ -1094,28 +1199,19 @@ let aboutPaul = {
     },
 
     newChannel: function(aURI) {
-        if (aURI.spec != "about:paul")
+        if (aURI.spec != "about:" + aboutCAEJobs_word)
             return;
 
-        let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/paul.html", null, null);
+        let uri = Services.io.newURI(aboutCAEJobs_page, null, null);
         return Services.io.newChannelFromURI(uri);
     }
-};
-Cm.QueryInterface(Ci.nsIComponentRegistrar).
-registerFactory(aboutPaulUUID, aboutPaulDescription, aboutPaulContract, aboutPaulFactory);
+});
 
-// about:guy factory
-let aboutGuyFactory = {
-    createInstance: function(outer, iid) {
-        if (outer !== null)
-            throw Cr.NS_ERROR_NO_AGGREGATION;
-
-        return aboutGuy.QueryInterface(iid);
-    }
-};
-
-// about:guy
-let aboutGuy = {
+function About0Viewer() {}
+About0Viewer.prototype = Object.freeze({
+    classDescription: about0Description,
+    contractID: '@mozilla.org/network/protocol/about;1?what=' + about0_word,
+    classID: components.ID('{' + about0UUID + '}'),
     QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
 
     getURIFlags: function(aURI) {
@@ -1123,28 +1219,19 @@ let aboutGuy = {
     },
 
     newChannel: function(aURI) {
-        if (aURI.spec != "about:guy")
+        if (aURI.spec != "about:" + about0_word)
             return;
 
-        let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/guy.html", null, null);
+        let uri = Services.io.newURI(about0_page, null, null);
         return Services.io.newChannelFromURI(uri);
     }
-};
-Cm.QueryInterface(Ci.nsIComponentRegistrar).
-registerFactory(aboutGuyUUID, aboutGuyDescription, aboutGuyContract, aboutGuyFactory);
+});
 
-// about:scott factory
-let aboutScottFactory = {
-    createInstance: function(outer, iid) {
-        if (outer !== null)
-            throw Cr.NS_ERROR_NO_AGGREGATION;
-
-        return aboutScott.QueryInterface(iid);
-    }
-};
-
-// about:scott
-let aboutScott = {
+function About1Viewer() {}
+About1Viewer.prototype = Object.freeze({
+    classDescription: about1Description,
+    contractID: '@mozilla.org/network/protocol/about;1?what=' + about1_word,
+    classID: components.ID('{' + about1UUID + '}'),
     QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
 
     getURIFlags: function(aURI) {
@@ -1152,28 +1239,19 @@ let aboutScott = {
     },
 
     newChannel: function(aURI) {
-        if (aURI.spec != "about:scott")
+        if (aURI.spec != "about:" + about1_word)
             return;
 
-        let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/scott.html", null, null);
+        let uri = Services.io.newURI(about1_page, null, null);
         return Services.io.newChannelFromURI(uri);
     }
-};
-Cm.QueryInterface(Ci.nsIComponentRegistrar).
-registerFactory(aboutScottUUID, aboutScottDescription, aboutScottContract, aboutScottFactory);
+});
 
-// about:suzhou factory
-let aboutSuzhouFactory = {
-    createInstance: function(outer, iid) {
-        if (outer !== null)
-            throw Cr.NS_ERROR_NO_AGGREGATION;
-
-        return aboutSuzhou.QueryInterface(iid);
-    }
-};
-
-// about:suzhou
-let aboutSuzhou = {
+function About2Viewer() {}
+About2Viewer.prototype = Object.freeze({
+    classDescription: about1Description,
+    contractID: '@mozilla.org/network/protocol/about;1?what=' + about2_word,
+    classID: components.ID('{' + about2UUID + '}'),
     QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
 
     getURIFlags: function(aURI) {
@@ -1181,28 +1259,19 @@ let aboutSuzhou = {
     },
 
     newChannel: function(aURI) {
-        if (aURI.spec != "about:suzhou")
+        if (aURI.spec != "about:" + about2_word)
             return;
 
-        let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/suzhou.html", null, null);
+        let uri = Services.io.newURI(about2_page, null, null);
         return Services.io.newChannelFromURI(uri);
     }
-};
-Cm.QueryInterface(Ci.nsIComponentRegistrar).
-registerFactory(aboutSuzhouUUID, aboutSuzhouDescription, aboutSuzhouContract, aboutSuzhouFactory);
+});
 
-// about:caejobs factory
-let aboutCAEJobsFactory = {
-    createInstance: function(outer, iid) {
-        if (outer !== null)
-            throw Cr.NS_ERROR_NO_AGGREGATION;
-
-        return aboutCAEJobs.QueryInterface(iid);
-    }
-};
-
-// about:caejobs
-let aboutCAEJobs = {
+function About3Viewer() {}
+About3Viewer.prototype = Object.freeze({
+    classDescription: about1Description,
+    contractID: '@mozilla.org/network/protocol/about;1?what=' + about3_word,
+    classID: components.ID('{' + about3UUID + '}'),
     QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
 
     getURIFlags: function(aURI) {
@@ -1210,14 +1279,195 @@ let aboutCAEJobs = {
     },
 
     newChannel: function(aURI) {
-        if (aURI.spec != "about:caejobs")
+        if (aURI.spec != "about:" + about3_word)
             return;
-        //var datafile = OS.Path.join(UproFile, "caejobs.html");
-        //var datafile = UproFile + "\\caejobs.html";
-        var datafile = OS.Path.toFileURI(OS.Path.join(UproFile, 'caejobs.html'));
-        let uri = Services.io.newURI(datafile, null, null);
+
+        let uri = Services.io.newURI(about3_page, null, null);
         return Services.io.newChannelFromURI(uri);
     }
-};
-Cm.QueryInterface(Ci.nsIComponentRegistrar).
-registerFactory(aboutCAEJobsUUID, aboutCAEJobsDescription, aboutCAEJobsContract, aboutCAEJobsFactory);
+});
+
+function Factory(component) {
+    this.createInstance = function(outer, iid) {
+        if (outer) {
+            throw Cr.NS_ERROR_NO_AGGREGATION;
+        }
+        return new component();
+    };
+    this.register = function() {
+        Cm.registerFactory(component.prototype.classID, component.prototype.classDescription, component.prototype.contractID, this);
+    };
+    this.unregister = function() {
+        Cm.unregisterFactory(component.prototype.classID, this);
+    }
+    Object.freeze(this);
+    this.register();
+}
+
+
+// const aboutGuyContract = "@mozilla.org/network/protocol/about;1?what=guy";
+// const aboutGuyDescription = "About " + users[0];
+// const aboutGuyUUID = components.ID("b4c22650-df83-11e4-8830-0800200c9a66");
+
+// const aboutScottContract = "@mozilla.org/network/protocol/about;1?what=scott";
+// const aboutScottDescription = "About " + users[1];
+// const aboutScottUUID = components.ID("b4c22651-df83-11e4-8830-0800200c9a66");
+
+// const aboutPaulContract = "@mozilla.org/network/protocol/about;1?what=paul";
+// const aboutPaulDescription = "About " + users[2];
+// const aboutPaulUUID = components.ID("b0b3af10-d3b3-11e4-8830-0800200c9a66");
+
+// const aboutSuzhouContract = "@mozilla.org/network/protocol/about;1?what=suzhou";
+// const aboutSuzhouDescription = "About " + users[3];
+// const aboutSuzhouUUID = components.ID("b4c22652-df83-11e4-8830-0800200c9a66");
+
+// const aboutCAEJobsContract = "@mozilla.org/network/protocol/about;1?what=caejobs";
+// const aboutCAEJobsDescription = "About CAE Jobs";
+// const aboutCAEJobsUUID = components.ID("bf031960-0ac3-11e5-b939-0800200c9a66");
+
+// // about:paul factory
+// let aboutPaulFactory = {
+    // createInstance: function(outer, iid) {
+        // if (outer !== null)
+            // throw Cr.NS_ERROR_NO_AGGREGATION;
+
+        // return aboutPaul.QueryInterface(iid);
+    // }
+// };
+
+// // about:paul
+// let aboutPaul = {
+    // QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+
+    // getURIFlags: function(aURI) {
+        // return Ci.nsIAboutModule.ALLOW_SCRIPT;
+    // },
+
+    // newChannel: function(aURI) {
+        // if (aURI.spec != "about:paul")
+            // return;
+
+        // let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/paul.html", null, null);
+        // return Services.io.newChannelFromURI(uri);
+    // }
+// };
+// Cm.QueryInterface(Ci.nsIComponentRegistrar).
+// registerFactory(aboutPaulUUID, aboutPaulDescription, aboutPaulContract, aboutPaulFactory);
+
+// // about:guy factory
+// let aboutGuyFactory = {
+    // createInstance: function(outer, iid) {
+        // if (outer !== null)
+            // throw Cr.NS_ERROR_NO_AGGREGATION;
+
+        // return aboutGuy.QueryInterface(iid);
+    // }
+// };
+
+// // about:guy
+// let aboutGuy = {
+    // QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+
+    // getURIFlags: function(aURI) {
+        // return Ci.nsIAboutModule.ALLOW_SCRIPT;
+    // },
+
+    // newChannel: function(aURI) {
+        // if (aURI.spec != "about:guy")
+            // return;
+
+        // let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/guy.html", null, null);
+        // return Services.io.newChannelFromURI(uri);
+    // }
+// };
+// Cm.QueryInterface(Ci.nsIComponentRegistrar).
+// registerFactory(aboutGuyUUID, aboutGuyDescription, aboutGuyContract, aboutGuyFactory);
+
+// // about:scott factory
+// let aboutScottFactory = {
+    // createInstance: function(outer, iid) {
+        // if (outer !== null)
+            // throw Cr.NS_ERROR_NO_AGGREGATION;
+
+        // return aboutScott.QueryInterface(iid);
+    // }
+// };
+
+// // about:scott
+// let aboutScott = {
+    // QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+
+    // getURIFlags: function(aURI) {
+        // return Ci.nsIAboutModule.ALLOW_SCRIPT;
+    // },
+
+    // newChannel: function(aURI) {
+        // if (aURI.spec != "about:scott")
+            // return;
+
+        // let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/scott.html", null, null);
+        // return Services.io.newChannelFromURI(uri);
+    // }
+// };
+// Cm.QueryInterface(Ci.nsIComponentRegistrar).
+// registerFactory(aboutScottUUID, aboutScottDescription, aboutScottContract, aboutScottFactory);
+
+// // about:suzhou factory
+// let aboutSuzhouFactory = {
+    // createInstance: function(outer, iid) {
+        // if (outer !== null)
+            // throw Cr.NS_ERROR_NO_AGGREGATION;
+
+        // return aboutSuzhou.QueryInterface(iid);
+    // }
+// };
+
+// // about:suzhou
+// let aboutSuzhou = {
+    // QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+
+    // getURIFlags: function(aURI) {
+        // return Ci.nsIAboutModule.ALLOW_SCRIPT;
+    // },
+
+    // newChannel: function(aURI) {
+        // if (aURI.spec != "about:suzhou")
+            // return;
+
+        // let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/suzhou.html", null, null);
+        // return Services.io.newChannelFromURI(uri);
+    // }
+// };
+// Cm.QueryInterface(Ci.nsIComponentRegistrar).
+// registerFactory(aboutSuzhouUUID, aboutSuzhouDescription, aboutSuzhouContract, aboutSuzhouFactory);
+
+// // about:caejobs factory
+// let aboutCAEJobsFactory = {
+    // createInstance: function(outer, iid) {
+        // if (outer !== null)
+            // throw Cr.NS_ERROR_NO_AGGREGATION;
+
+        // return aboutCAEJobs.QueryInterface(iid);
+    // }
+// };
+
+// // about:caejobs
+// let aboutCAEJobs = {
+    // QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+
+    // getURIFlags: function(aURI) {
+        // return Ci.nsIAboutModule.ALLOW_SCRIPT;
+    // },
+
+    // newChannel: function(aURI) {
+        // if (aURI.spec != "about:caejobs")
+            // return;
+        // //var datafile = OS.Path.join(UproFile, "caejobs.html");
+        // //var datafile = UproFile + "\\caejobs.html";
+        // var datafile = OS.Path.toFileURI(OS.Path.join(UproFile, 'caejobs.html'));
+        // let uri = Services.io.newURI(datafile, null, null);
+        // return Services.io.newChannelFromURI(uri);
+    // }
+// };
+// Cm.QueryInterface(Ci.nsIComponentRegistrar).
+// registerFactory(aboutCAEJobsUUID, aboutCAEJobsDescription, aboutCAEJobsContract, aboutCAEJobsFactory);

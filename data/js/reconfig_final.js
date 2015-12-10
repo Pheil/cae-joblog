@@ -59,17 +59,17 @@ var mytable = document.getElementsByTagName('table')[0];
     }
 
     // Add EWS values from new trimmed table to array
-    var owner_array = [];
+    //var owner_array = [];
     for (var n = mytable.rows.length - 1; n >= 0; n--) {
         var ews = mytable.rows[n].cells[0].textContent;
         var ews_entry = ews;
         ews_array.push(ews_entry.toString());
-        owner_array.push("NoOne");
+        //owner_array.push("NoOne");
     }
     //Remove first entry to delete heading
     ews_array.splice(ews_array.length-1, 1);
-    owner_array.splice(owner_array.length-1, 1);
-    UpdateMaster(ews_array, owner_array);
+    //owner_array.splice(owner_array.length-1, 1);
+    UpdateMaster(ews_array);
 //}
 
 function modB(){
@@ -267,8 +267,9 @@ function modB(){
         var count2_value;
         //If currently assigned to someone but not owner drop target
         var old_owner = row.cells[5].textContent.toLowerCase();
+        //var ews = tables.rows[row].cells[0].textContent;
         if (old_owner != "none" && old_owner != owner) {
-            ews = new Array(ews);
+            ews = new Array(ews_value);
             old_owner = new Array(old_owner);
             var upChange = new Array(ews, old_owner);
             unassign(upChange);
@@ -333,7 +334,7 @@ function modB(){
         }
         //If already assigned to same owner as drop target
         if (old_owner == owner) {
-            console.log("Error, job already assigned to " + owner);
+            console.error(ews_value + " is already assigned to " + owner);
         }
         event.preventDefault(); // don't forget this!
         return false;
@@ -342,8 +343,8 @@ function modB(){
 var tables = document.getElementById('thetable');
 // Compare current EWS list to user logged list and highlight if already assigned
 // Unassigns if dCHK is equal to non-breaking space (IE the job is marked as complete)
-    sendAsyncMessage("rtn_logged_g", "guy");
-    addMessageListener("userLog_g", function(msg) {
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:rtn_logged", "guy");
+    self.port.on("CAEJobLog-at-tenneco-dot-com:userLog_0", function(msg) {
         var all_logged_ews = msg.data;
         if (all_logged_ews[0] !== "") {
             guyTotal = all_logged_ews.length;
@@ -375,8 +376,8 @@ var tables = document.getElementById('thetable');
         div_gx.setAttribute('title', guyTotal + ' Jobs Assigned');
         
     });
-    sendAsyncMessage("rtn_logged_s", "scott");
-    addMessageListener("userLog_s", function(msg) {
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:rtn_logged_1", "scott");
+    self.port.on("CAEJobLog-at-tenneco-dot-com:userLog_1", function(msg) {
         var all_logged_ews = msg.data;
         if (all_logged_ews[0] !== "") {
             scottTotal = all_logged_ews.length;
@@ -404,8 +405,8 @@ var tables = document.getElementById('thetable');
         var div_sx = document.getElementById('scott_div');
         div_sx.setAttribute('title', scottTotal + ' Jobs Assigned');
     });
-    sendAsyncMessage("rtn_logged_p", "paul");
-    addMessageListener("userLog_p", function(msg) {
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:rtn_logged_2", "paul");
+    self.port.on("CAEJobLog-at-tenneco-dot-com:userLog_2", function(msg) {
         var all_logged_ews = msg.data;
         if (all_logged_ews[0] !== "") {
             paulTotal = all_logged_ews.length;
@@ -433,8 +434,8 @@ var tables = document.getElementById('thetable');
         var div_px = document.getElementById('paul_div');
         div_px.setAttribute('title', paulTotal + ' Jobs Assigned');
     });
-    sendAsyncMessage("rtn_logged_h", "suzhou");
-    addMessageListener("userLog_h", function(msg) {
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:rtn_logged_3", "suzhou");
+    self.port.on("CAEJobLog-at-tenneco-dot-com:userLog_3", function(msg) {
         var all_logged_ews = msg.data;
         if (all_logged_ews[0] !== "") {
             suzhouTotal = all_logged_ews.length;
@@ -473,7 +474,7 @@ var tables = document.getElementById('thetable');
         var assignTotal = div_suma + div_sumb + div_sumc + div_sumd;
         var allTotal = tables.rows.length-1;
         var unassignTotal = allTotal - assignTotal;
-        sendAsyncMessage("badge", unassignTotal);
+        self.port.emit("CAEJobLog-at-tenneco-dot-com:badge", unassignTotal);
         
         div_sum.appendChild(div_sum2);
         var div_hx = document.getElementById('suzhou_div');
@@ -486,10 +487,10 @@ for (var i = 0; i < links.length; i++) {
     var url = links[i].href;
     var txt = links[i].textContent;
     var urlData = new Array(url, txt);
-    sendAsyncMessage("prints", urlData);
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:prints", urlData);
 }
 
-addMessageListener("dPrints", function(urlData) {
+self.port.on("CAEJobLog-at-tenneco-dot-com:dPrints", function(urlData) {
     var URLarray = urlData.data;
     var url_new = URLarray[0];
     var url_old = URLarray[1];
@@ -511,14 +512,14 @@ addMessageListener("dPrints", function(urlData) {
 }    
 function saveData(ews_value, owner) {
     var upChange = new Array(ews_value, owner);
-    sendAsyncMessage("update", upChange);
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:update", upChange);
 }
 function unassign(upChange) {
-    sendAsyncMessage("unassign", upChange);
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:unassign", upChange);
 }
-function UpdateMaster(ews_array, owner_array) {
-    var upChange = new Array(ews_array, owner_array);
-    sendAsyncMessage("save", upChange);
+function UpdateMaster(ews_array) {
+    var upChange = new Array(ews_array);
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:save", upChange);
 }
  
 function tablesort() {
@@ -590,20 +591,21 @@ modB();
 //Reload button
 var works = document.getElementById("button");
 works.addEventListener("click", function() {
-     sendAsyncMessage("reloadx");
+     self.port.emit("CAEJobLog-at-tenneco-dot-com:reloadx");
      
 }, false);
 
-    addMessageListener("unassignNum", function(owner) {
+    self.port.on("CAEJobLog-at-tenneco-dot-com:unassignNum", function(owner) {
         var username = owner.data;
         console.log(username + " (-1)");
-        var count = document.getElementById(username.toLowerCase() + '_note');
+        var count = document.getElementById(username.toString().toLowerCase() + '_note');
         count_value =  parseInt(count.textContent) - 1;
         count.textContent = count_value;
-        var newTitle = document.getElementById(username.toLowerCase() + '_div');
+        var newTitle = document.getElementById(username.toString().toLowerCase() + '_div');
         newTitle.setAttribute('title', count_value + ' Jobs Assigned');
     });
     
-    addMessageListener("pageready", function() {
+    self.port.on("CAEJobLog-at-tenneco-dot-com:pageready", function() {
        location.reload();
+       self.port.emit("CAEJobLog-at-tenneco-dot-com:clearCompleted");
     });
