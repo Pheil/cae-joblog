@@ -20,27 +20,32 @@
                 </tr>
             </thead>
             <tbody> 
-                <tr id="Press" draggable="true" class="dnd border-fade wobble-horizontal">
-                        <td style="text-align:center"colspan="6">
-                            Press "Update" to retrieve latest data.
-                        </td>
+                <tr id="Empty" draggable="false" class="dnd">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
                 </tr>
             </tbody>
         </table>
         </div>
     </center>
+    <div id="info" class="info"><center>Press "Update" to retrieve lastest information.</center></div>
     <div id="container">
         <div title="Guy" id="guy" class="floatinguser_guy floatinguser hover-shadow"></div>
         <div title="Scott" id="scott" class="floatinguser_scott floatinguser hover-shadow"></div>
         <div title="Paul" id="paul" class="floatinguser_paul floatinguser hover-shadow"></div>
         <div title="Suzhou" id="suzhou" class="floatinguser_suzhou floatinguser hover-shadow"></div>
         
-        <div title="TBD Jobs Assigned" id="guy_div" class="ui-state-highlight ui-corner-all floatinguser_note guy_note bubble-float-right"><span style="float: left; margin-right: .1em;" class="ui-icon ui-icon-info"></span><p style="margin-top: auto; height: 0.1em; float: right;" id="guy_note">TBD</p></div>
-        <div title="TBD Jobs Assigned" id="scott_div" class="ui-state-highlight ui-corner-all floatinguser_note scott_note bubble-float-right"><span style="float: left; margin-right: .1em;" class="ui-icon ui-icon-info"></span><p style="margin-top: auto; height: 0.1em; float: right;" id="scott_note">TBD</p></div>
-        <div title="TBD Jobs Assigned" id="paul_div" class="ui-state-highlight ui-corner-all floatinguser_note paul_note bubble-float-right"><span style="float: left; margin-right: .1em;" class="ui-icon ui-icon-info"></span><p style="margin-top: auto; height: 0.1em; float: right;" id="paul_note">TBD</p></div>
-        <div title="TBD Jobs Assigned" id="suzhou_div" class="ui-state-highlight ui-corner-all floatinguser_note suzhou_note bubble-float-right"><span style="float: left; margin-right: .1em;" class="ui-icon ui-icon-info"></span><p style="margin-top: auto; height: 0.1em; float: right;" id="suzhou_note">TBD</p></div>
-        
-        <div id="ews_totala" class="ui-state-highlight ui-corner-all total_note grow">- / <span id="ews_totalb">-</span></div>
+        <div title="0 Jobs Assigned" id="guy_div" class="ui-state-highlight ui-corner-all floatinguser_note guy_note bubble-float-right"><span style="float: left; margin-right: .1em;" class="ui-icon ui-icon-info"></span><p style="margin-top: auto; height: 0.1em; float: right;" id="guy_note">0</p></div>
+        <div title="0 Jobs Assigned" id="scott_div" class="ui-state-highlight ui-corner-all floatinguser_note scott_note bubble-float-right"><span style="float: left; margin-right: .1em;" class="ui-icon ui-icon-info"></span><p style="margin-top: auto; height: 0.1em; float: right;" id="scott_note">0</p></div>
+        <div title="0 Jobs Assigned" id="paul_div" class="ui-state-highlight ui-corner-all floatinguser_note paul_note bubble-float-right"><span style="float: left; margin-right: .1em;" class="ui-icon ui-icon-info"></span><p style="margin-top: auto; height: 0.1em; float: right;" id="paul_note">0</p></div>
+        <div title="0 Jobs Assigned" id="suzhou_div" class="ui-state-highlight ui-corner-all floatinguser_note suzhou_note bubble-float-right"><span style="float: left; margin-right: .1em;" class="ui-icon ui-icon-info"></span><p style="margin-top: auto; height: 0.1em; float: right;" id="suzhou_note">0</p></div>
+        <div class="ui-state-highlight ui-corner-all grow total_note">
+            <div id="ews_totala" class="total_notea">0</div>
+            <div id="ews_totalb" class="total_noteb">0</div>
+        </div>
         <div class="container2"><a class="rel_but ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary" id="button"><span class="ui-button-icon-primary ui-icon ui-icon-arrowrefresh-1-w relo"></span><span class="ui-button-text">Update</span></a>
         </div>
     </div>

@@ -59,7 +59,11 @@ function refreshInformation(output) {
     for (var row=0; row<table_b.rows.length;row++) {
         myRows[row] = {};
         for (var cell=0; cell<table_b.rows[row].cells.length;cell++) {
-            myRows[row][headersText[cell]] = table_b.rows[row].cells[cell].textContent;
+            //if (cell==2) {
+            //    myRows[row][headersText[cell]] = table_b.rows[row].cells[cell].innerHTML;
+            //} else {
+                myRows[row][headersText[cell]] = table_b.rows[row].cells[cell].textContent;
+            //}
         }
     }
     

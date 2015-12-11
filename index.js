@@ -6,7 +6,7 @@ const tab_utils = require("sdk/tabs/utils");
 const panels = require("sdk/panel");
 const self = require("sdk/self");
 const data = require('sdk/self').data;
-const ss = require("sdk/simple-storage");
+//const ss = require("sdk/simple-storage");
 const file = require("sdk/io/file");
 const path = require('sdk/fs/path');
 const cm = require("sdk/context-menu");
@@ -67,7 +67,7 @@ exports.main = function(options, callbacks) {
         factory = new Factory(About3Viewer);
         registerRemotePages();
     }
-}
+};
 
 exports.onUnload = function (reason) {
     if (reason == "shutdown") {
@@ -360,76 +360,29 @@ pageMod.PageMod({
                 iconURL: myIconURL
             });
             updateJobs();            //Start update process
+            //worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageUpdate");
         });
         
-        worker.port.on('CAEJobLog-at-tenneco-dot-com:prints', function (message) {
-            //var URLarray = array.data;
-            var url = message[0];
-            var part = message[1];
-            if (url.includes("p_part_id")) {
-                var urlCHK = fileURL.FSdisplay(String(/[^\s]+/.exec(part)));
-                if (urlCHK != "unknown") {
-                    var url_new = urlCHK;
-                    var url_old = url;
-                    var URLs = new Array(url_new, url_old);
-                    worker.port.emit("CAEJobLog-at-tenneco-dot-com:dPrints", URLs);
-                }
-            }
-        });
+        // worker.port.on('CAEJobLog-at-tenneco-dot-com:prints', function (message) {
+            // //var URLarray = array.data;
+            // var url = message[0];
+            // var part = message[1];
+            // if (url.includes("p_part_id")) {
+                // var urlCHK = fileURL.FSdisplay(String(/[^\s]+/.exec(part)));
+                // if (urlCHK != "unknown") {
+                    // var url_new = urlCHK;
+                    // var url_old = url;
+                    // var URLs = new Array(url_new, url_old);
+                    // worker.port.emit("CAEJobLog-at-tenneco-dot-com:dPrints", URLs);
+                // }
+            // }
+        // });
         
-        worker.port.on('CAEJobLog-at-tenneco-dot-com:badge', function (state) {
-            var num = state;
-            cae_button.badge = num;
-            cae_button.badgeColor = "#AA00AA";
-        });
-        
-        worker.port.on('CAEJobLog-at-tenneco-dot-com:save', function (all_array) {
-            var ews_array = all_array[0],
-                owner_array = all_array[1],
-                ews_path = pathBase + "ews_log.txt";
-            Write_data(ews_path, ews_array);            // Save ews list locally
-            
-            // Update owner log vs user logs (already logged EWS)
-            var user;
-            for (var j=0; j < users.length; j++) {
-                user = users[j];
-                var del_array = [],
-                    old_length,
-                    user_log = [],
-                    user_path = pathBase + user + "_log.txt",
-                    user_log_str = readText(user_path);
-                if (user_log_str !== null || user_log_str !== "") {
-                    user_log = user_log_str.split(",");
-                    var curArray = user_log;
-                    old_length = curArray.length;
-                    for (var i=0; i < user_log.length; i++) {
-                        var user_chk = user_log[i];
-                        var location = ews_array.indexOf(user_chk);        // Check for match in EWS list
-                        if (location > -1) {
-                            //console.log("RECORD FOUND " + location + " - " + user_chk);
-                            owner_array[location] = user;                               // Match found so assign
-                        } else if (location == -1) {
-                            console.error("User record not found: " + user_chk);
-                            del_array.push(user_chk);
-                            //user_log.splice(user_log.indexOf(user_chk), 1);    // Not found so remove from User log (disabled)
-                        }
-                    }
-                }
-                if (user_log.length != old_length) {//Array changed so update users log file
-                    console.log(user + " EWS log: " + old_length  + "->" + user_log.length + " [" + del_array + "]");
-                    notifications.notify({
-                        title: "CAE Job Log",
-                        text: user + "'s log contains unmatched worksheets: \n\n" + del_array,
-                        iconURL: myIconURL
-                    });
-                    Write_data(user_path, user_log);      
-                    console.info("User log updated [" + old_length + " -> " + user_log.length + "]");
-                    //console.info("Removed: " + del_array);
-                }
-            }
-            var owner_path = pathBase + "owner_log.txt";
-            Write_data(owner_path, owner_array);
-        });
+        // worker.port.on('CAEJobLog-at-tenneco-dot-com:badge', function (state) {
+            // var num = state;
+            // cae_button.badge = num;
+            // cae_button.badgeColor = "#AA00AA";
+        // });
         
         worker.port.on('CAEJobLog-at-tenneco-dot-com:update', function (upChange) {
             var ews = upChange[0];
@@ -581,41 +534,12 @@ pageMod.PageMod({
                 let self = this;
                 this.element.addEventListener("DOMContentLoaded", function() {
                     var datadump = refreshInformation(self.element.contentDocument);
-                    //console.log(datadump);
 
-                    //Temp open table in tab
-                    //function delay(ms, value) {
-                    // let { promise, resolve } = defer();
-                    //  setTimeout(resolve, ms, value);
-                    //  return promise;
-                    //}
-
-                    //function timeout(promise, ms) {
-                    //  let deferred = defer();
-                    //  promise.then(deferred.resolve, deferred.reject);
-                    //  delay(ms, 'timeout').then(deferred.reject);
-                    //  return deferred.promise;
-                    //}
-                    //var patha = UproFile + "table.json";
-                    //timeout(Write_data(patha, datadump), 200).then(function(data) {
-                        //Open file in tab?
-                        //ui.display(data);
-                        //Close old log, copy, then open new log
-                        //CAEmanager.sendAsyncMessage("pageready");
-                    //}, function() {
-                        //Seems to fire regardless of status
-                        //notifications.notify({
-                        //    title: "CAE Job Log",
-                        //    text: "Network is being too slow, try again later",
-                        //    iconURL: myIconURL
-                        //});
-                    //});
-                    //CAEmanagerUpdate();
                     hiddenFrames.remove(hiddenFrame);
                     worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageprep");
                     
                     //Check assigned status before sending to caejobs by loading user logs to arrays
-                    var user_arrays = []
+                    var user_arrays = [];
                     for (var j=0; j < users.length; j++) {
                         var user = users[j];
                         var user_path = pathBase + user + "_log.txt";
@@ -626,78 +550,78 @@ pageMod.PageMod({
                         }
                     }
                     
-                    var str = '';
-                    var array = JSON.parse(datadump);
+                    var str = '',
+                        array = JSON.parse(datadump),
+                        ews_array = [],
+                        assigned = '';
+                    worker.port.emit("CAEJobLog-at-tenneco-dot-com:totalUpdate", array.length);
+                    cae_button.badge = array.length;
+                    cae_button.badgeColor = "#aa00aa";
                     for (var i = 0; i < array.length; i++) {
                         var ews = array[i].EWS;
                         var bu = array[i].BU;
                         var pn = array[i].PartNo;
                         var sub = array[i].Submit;
-                        //var cae = array[i].CAE;  //TO BE REMOVED
-                        var assigned;
-                        //console.log(obj);
+                        assigned = 'None';
+                        ews_array.push(ews);
                         for (var r=0; r < user_arrays.length; r++) { //for each user log array
                             for (var p=0; p < user_arrays[r].length; p++) { //for each ews from each user
                                 if (user_arrays[r][p] == ews) { 
-                                    //assigned
                                     assigned = users[r];
-                                } else {
-                                    //not assigned (do nothing)
                                 }
                             } 
                         }
-                        if (typeof assigned === 'undefined' || assigned === null) {
+                        var pnCHK = fileURL.FSdisplay(pn);
+                        if (assigned == 'None') {
                             str += '<tr id="'+ ews + '" class="dnd border-fade wobble-horizontal" draggable="true">';
-                            str += '<td>' + ews + '</td>';
+                            str += '<td><a href="http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + ews + '">' + ews + '</a></td>';
                             str += '<td>' + bu + '</td>';
-                            str += '<td>' + pn + '</td>';
+                            if (pnCHK != "unknown") {
+                                str += '<td><a href="' + pnCHK + '">' + pn + '</a></td>';
+                            } else {
+                                str += '<td>' + pn + '</td>';
+                            }
                             str += '<td>' + sub + '</td>';
-                            //str += '<td>' + cae + '</td>';  //TO BE REMOVED
-                            str += '<td>None</td>';
+                            str += '<td>' + assigned + '</td>';
                             str += '</tr>';
                         } else {
                             str += '<tr id="'+ ews + '" class="dnd border-fade wobble-horizontal ' + assigned +'" draggable="true">';
-                            str += '<td>' + ews + '</td>';
+                            str += '<td><a href="http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + ews + '">' + ews + '</a></td>';
                             str += '<td>' + bu + '</td>';
-                            str += '<td>' + pn + '</td>';
+                            if (pnCHK != "unknown") {
+                                str += '<td><a href="' + pnCHK + '">' + pn + '</a></td>';
+                            } else {
+                                str += '<td>' + pn + '</td>';
+                            }
                             str += '<td>' + sub + '</td>';
-                            //str += '<td>' + cae + '</td>';  //TO BE REMOVED
                             str += '<td>' + assigned + '</td>';
                             str += '</tr>';
+                            var curtotal = cae_button.badge;
+                            cae_button.badge = curtotal-1;
+                            worker.port.emit("CAEJobLog-at-tenneco-dot-com:countUpdate", assigned);
                         }
                     }
-                    worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageUpdate", str);
-                    //}
-
-                    //worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageUpdate", datadump);
-
+                    worker.port.emit("CAEJobLog-at-tenneco-dot-com:rowUpdate", str);
+                    //UNCOMMENT ME FOR PROD
+                    //saveEWSRecords(ews_array);
                 }, true, true);
               }
-            }));  
+            })); 
+            
         }
-
-        //function CAEmanagerUpdate(){
-            //Copy file to user directory
-            //var patha = pathBase + "index.html";
-            //var pathb = OS.Path.join(UproFile, "caejobs.html");
-            //var promise = OS.File.copy(patha, pathb);
-            //promise.then(
-                //function(aStat) {
-                    //notifications.notify({
-                        //title: "CAE Job Log",
-                        //text: "Job List Updated",
-                        //iconURL: myIconURL
-                    //});
-                    //CHANGE TO LOAD JSON
-                    //worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageprep");
-                    //worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageready");
-                //},
-                //function(aReason) {
-                //    console.error('Copy blank caejobs failed, see console for details');
-                //    console.log('promise rejected', aReason);
-                //}
-            //);
-        //}
+        
+        function saveEWSRecords(arrayData) {
+            var ews_path = pathBase + "ews_log.txt";
+            Write_data(ews_path, arrayData);        // Save ews list locally   
+            // Save ews log to server (For website display)
+            Request({
+                url: "http://tamilan.na.ten/cae/FFX_ewsLog_handler.php",
+                content: { EWSArray: arrayData },
+                onComplete: function (response) {
+                    console.log( response.text );
+                }
+            }).post();
+        }
 
         function unassign(upChange) {
             var parsedupChange = JSON.parse(upChange);
@@ -1249,7 +1173,7 @@ About1Viewer.prototype = Object.freeze({
 
 function About2Viewer() {}
 About2Viewer.prototype = Object.freeze({
-    classDescription: about1Description,
+    classDescription: about2Description,
     contractID: '@mozilla.org/network/protocol/about;1?what=' + about2_word,
     classID: components.ID('{' + about2UUID + '}'),
     QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
@@ -1269,7 +1193,7 @@ About2Viewer.prototype = Object.freeze({
 
 function About3Viewer() {}
 About3Viewer.prototype = Object.freeze({
-    classDescription: about1Description,
+    classDescription: about3Description,
     contractID: '@mozilla.org/network/protocol/about;1?what=' + about3_word,
     classID: components.ID('{' + about3UUID + '}'),
     QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
@@ -1299,175 +1223,7 @@ function Factory(component) {
     };
     this.unregister = function() {
         Cm.unregisterFactory(component.prototype.classID, this);
-    }
+    };
     Object.freeze(this);
     this.register();
 }
-
-
-// const aboutGuyContract = "@mozilla.org/network/protocol/about;1?what=guy";
-// const aboutGuyDescription = "About " + users[0];
-// const aboutGuyUUID = components.ID("b4c22650-df83-11e4-8830-0800200c9a66");
-
-// const aboutScottContract = "@mozilla.org/network/protocol/about;1?what=scott";
-// const aboutScottDescription = "About " + users[1];
-// const aboutScottUUID = components.ID("b4c22651-df83-11e4-8830-0800200c9a66");
-
-// const aboutPaulContract = "@mozilla.org/network/protocol/about;1?what=paul";
-// const aboutPaulDescription = "About " + users[2];
-// const aboutPaulUUID = components.ID("b0b3af10-d3b3-11e4-8830-0800200c9a66");
-
-// const aboutSuzhouContract = "@mozilla.org/network/protocol/about;1?what=suzhou";
-// const aboutSuzhouDescription = "About " + users[3];
-// const aboutSuzhouUUID = components.ID("b4c22652-df83-11e4-8830-0800200c9a66");
-
-// const aboutCAEJobsContract = "@mozilla.org/network/protocol/about;1?what=caejobs";
-// const aboutCAEJobsDescription = "About CAE Jobs";
-// const aboutCAEJobsUUID = components.ID("bf031960-0ac3-11e5-b939-0800200c9a66");
-
-// // about:paul factory
-// let aboutPaulFactory = {
-    // createInstance: function(outer, iid) {
-        // if (outer !== null)
-            // throw Cr.NS_ERROR_NO_AGGREGATION;
-
-        // return aboutPaul.QueryInterface(iid);
-    // }
-// };
-
-// // about:paul
-// let aboutPaul = {
-    // QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
-
-    // getURIFlags: function(aURI) {
-        // return Ci.nsIAboutModule.ALLOW_SCRIPT;
-    // },
-
-    // newChannel: function(aURI) {
-        // if (aURI.spec != "about:paul")
-            // return;
-
-        // let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/paul.html", null, null);
-        // return Services.io.newChannelFromURI(uri);
-    // }
-// };
-// Cm.QueryInterface(Ci.nsIComponentRegistrar).
-// registerFactory(aboutPaulUUID, aboutPaulDescription, aboutPaulContract, aboutPaulFactory);
-
-// // about:guy factory
-// let aboutGuyFactory = {
-    // createInstance: function(outer, iid) {
-        // if (outer !== null)
-            // throw Cr.NS_ERROR_NO_AGGREGATION;
-
-        // return aboutGuy.QueryInterface(iid);
-    // }
-// };
-
-// // about:guy
-// let aboutGuy = {
-    // QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
-
-    // getURIFlags: function(aURI) {
-        // return Ci.nsIAboutModule.ALLOW_SCRIPT;
-    // },
-
-    // newChannel: function(aURI) {
-        // if (aURI.spec != "about:guy")
-            // return;
-
-        // let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/guy.html", null, null);
-        // return Services.io.newChannelFromURI(uri);
-    // }
-// };
-// Cm.QueryInterface(Ci.nsIComponentRegistrar).
-// registerFactory(aboutGuyUUID, aboutGuyDescription, aboutGuyContract, aboutGuyFactory);
-
-// // about:scott factory
-// let aboutScottFactory = {
-    // createInstance: function(outer, iid) {
-        // if (outer !== null)
-            // throw Cr.NS_ERROR_NO_AGGREGATION;
-
-        // return aboutScott.QueryInterface(iid);
-    // }
-// };
-
-// // about:scott
-// let aboutScott = {
-    // QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
-
-    // getURIFlags: function(aURI) {
-        // return Ci.nsIAboutModule.ALLOW_SCRIPT;
-    // },
-
-    // newChannel: function(aURI) {
-        // if (aURI.spec != "about:scott")
-            // return;
-
-        // let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/scott.html", null, null);
-        // return Services.io.newChannelFromURI(uri);
-    // }
-// };
-// Cm.QueryInterface(Ci.nsIComponentRegistrar).
-// registerFactory(aboutScottUUID, aboutScottDescription, aboutScottContract, aboutScottFactory);
-
-// // about:suzhou factory
-// let aboutSuzhouFactory = {
-    // createInstance: function(outer, iid) {
-        // if (outer !== null)
-            // throw Cr.NS_ERROR_NO_AGGREGATION;
-
-        // return aboutSuzhou.QueryInterface(iid);
-    // }
-// };
-
-// // about:suzhou
-// let aboutSuzhou = {
-    // QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
-
-    // getURIFlags: function(aURI) {
-        // return Ci.nsIAboutModule.ALLOW_SCRIPT;
-    // },
-
-    // newChannel: function(aURI) {
-        // if (aURI.spec != "about:suzhou")
-            // return;
-
-        // let uri = Services.io.newURI("resource://CAEJobLog-at-tenneco-dot-com/data/suzhou.html", null, null);
-        // return Services.io.newChannelFromURI(uri);
-    // }
-// };
-// Cm.QueryInterface(Ci.nsIComponentRegistrar).
-// registerFactory(aboutSuzhouUUID, aboutSuzhouDescription, aboutSuzhouContract, aboutSuzhouFactory);
-
-// // about:caejobs factory
-// let aboutCAEJobsFactory = {
-    // createInstance: function(outer, iid) {
-        // if (outer !== null)
-            // throw Cr.NS_ERROR_NO_AGGREGATION;
-
-        // return aboutCAEJobs.QueryInterface(iid);
-    // }
-// };
-
-// // about:caejobs
-// let aboutCAEJobs = {
-    // QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
-
-    // getURIFlags: function(aURI) {
-        // return Ci.nsIAboutModule.ALLOW_SCRIPT;
-    // },
-
-    // newChannel: function(aURI) {
-        // if (aURI.spec != "about:caejobs")
-            // return;
-        // //var datafile = OS.Path.join(UproFile, "caejobs.html");
-        // //var datafile = UproFile + "\\caejobs.html";
-        // var datafile = OS.Path.toFileURI(OS.Path.join(UproFile, 'caejobs.html'));
-        // let uri = Services.io.newURI(datafile, null, null);
-        // return Services.io.newChannelFromURI(uri);
-    // }
-// };
-// Cm.QueryInterface(Ci.nsIComponentRegistrar).
-// registerFactory(aboutCAEJobsUUID, aboutCAEJobsDescription, aboutCAEJobsContract, aboutCAEJobsFactory);
