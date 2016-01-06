@@ -21,7 +21,7 @@
     "0": "addon-sdk"
   },
   "engines": {
-    "firefox": ">=39.0"
+    "firefox": ">=43.0"
   },
   "preferences": [{
     "name": "userID",

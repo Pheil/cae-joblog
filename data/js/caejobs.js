@@ -4,9 +4,20 @@ var works = document.getElementById("button");
         self.port.emit("CAEJobLog-at-tenneco-dot-com:reloadx");
     }, false);
     
-    // sort
-    //$("#thetable").trigger("sorton",[[3,1]]);
-    
+//user buttons
+document.getElementById("guy").addEventListener("click", function() {
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:aboutOpen", "guy");
+}, false);
+document.getElementById("scott").addEventListener("click", function() {
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:aboutOpen", "scott");
+}, false);
+document.getElementById("paul").addEventListener("click", function() {
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:aboutOpen", "paul");
+}, false);
+document.getElementById("suzhou").addEventListener("click", function() {
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:aboutOpen", "suzhou");
+}, false);
+        
     // add parser through the tablesorter addParser method 
     $.tablesorter.addParser({ 
         // set a unique id 
@@ -18,10 +29,10 @@ var works = document.getElementById("button");
         format: function(s) { 
             // format your data for normalization 
             var Months = {JAN: 10, FEB: 20, MAR: 30, APR: 40, MAY: 50, JUN: 60, JUL: 70, AUG: 80, SEP: 90, OCT: 91, NOV: 92, DEC: 93};
-            var yr = s.substr(7,2);
-            var mt = s.substr(3,3);
-            var mt2 = Months[mt];
-            var dt1 = yr+mt2+s.substr(0,2);
+            var yr = s.substr(7,2),
+                mt = s.substr(3,3),
+                mt2 = Months[mt],
+                dt1 = yr+mt2+s.substr(0,2);
 
             return dt1; 
         }, 
@@ -38,15 +49,14 @@ var works = document.getElementById("button");
         }, 
         format: function(s) { 
             // format your data for normalization 
-            var g = /guy/i;
-            var sc = /scott/i;
-            var p = /paul/i;
-            var h = /suzhou/i;
-            var n = /none/i;
-            var nn = /n\/a/i;
-            var str = s.toString().toLowerCase();
-            //console.log(str);
-            var users = str.replace(g,1).replace(sc,2).replace(p,3).replace(h,4).replace(n,5).replace(nn,6); 
+            var g = /guy/i,
+                sc = /scott/i,
+                p = /paul/i,
+                h = /suzhou/i,
+                n = /none/i,
+                nn = /n\/a/i,
+                str = s.toString().toLowerCase(),
+                users = str.replace(g,1).replace(sc,2).replace(p,3).replace(h,4).replace(n,5).replace(nn,6); 
             return users;
  
         }, 
@@ -70,13 +80,9 @@ var works = document.getElementById("button");
     });
 
 self.port.on("CAEJobLog-at-tenneco-dot-com:pageprep", function() {
-    //
-    // Need to check if only first row needs removed or all old data too
-    //
     // Remove blank row / old data
     var table = document.getElementsByTagName('table')[0];
     if (table.rows.length > 2) {
-        //$('#thetable').empty();
         $("#thetable > tbody").html("");
     } else {
         table.deleteRow(1); 
@@ -84,7 +90,17 @@ self.port.on("CAEJobLog-at-tenneco-dot-com:pageprep", function() {
     var div_info = document.getElementById('info');
     div_info.style.display = 'none';
     
-
+    // Reset assigned job totals
+    document.getElementById('guy_note').textContent = "0";
+    document.getElementById('guy_div').setAttribute('title', '0 Jobs Assigned');
+    document.getElementById('scott_note').textContent = "0";
+    document.getElementById('scott_div').setAttribute('title', '0 Jobs Assigned');
+    document.getElementById('paul_note').textContent = "0";
+    document.getElementById('paul_div').setAttribute('title', '0 Jobs Assigned');
+    document.getElementById('suzhou_note').textContent = "0";
+    document.getElementById('suzhou_div').setAttribute('title', '0 Jobs Assigned');
+    document.getElementById("ews_totalb").textContent = "0";
+    document.getElementById("ews_totala").textContent = "0";
 });
 
 self.port.on("CAEJobLog-at-tenneco-dot-com:rowUpdate", function(data) {
@@ -93,11 +109,7 @@ self.port.on("CAEJobLog-at-tenneco-dot-com:rowUpdate", function(data) {
     // TODO: Figure out how to only add updated records
     $('#thetable').append(data).fadeIn( "slow" );
     $("#thetable").trigger("update");
-    tablesort();
-    
-    //NEED TO FIGURE OUT WHERE TO PUT THIS TO NOT CAUSE NO SORT AND ERROR
-    //ERRORS HERE
-    $("#thetable").trigger("sorton",[[3,1]]);
+
 });
 
 self.port.on("CAEJobLog-at-tenneco-dot-com:countUpdate", function(user) {
@@ -120,8 +132,21 @@ self.port.on("CAEJobLog-at-tenneco-dot-com:totalUpdate", function(total) {
     theSum.textContent = total;
 });
 
+self.port.on("CAEJobLog-at-tenneco-dot-com:finalUpdate", function(total) {
+    //
+    // Add dragging handlers, update sort, send request to clear closed
+    tableDrag();
+    
+    setTimeout(function() { 
+        /* e.g. sort by the second column in descending order */
+        var sorting = [[3, 1]];
+        $("#thetable").trigger("sorton", [sorting]);
+    }, 30);
+    self.port.emit("CAEJobLog-at-tenneco-dot-com:clearCompleted");
+});
 
-function tablesort() {
+
+function tableDrag() {
     //Assignment scripts
     // Get the draggable elements.
     var dragElements = document.querySelectorAll('#thetable .dnd');
@@ -194,12 +219,12 @@ function tablesort() {
         event.target.style.width = "50px";
         event.target.style.height = "50px";
         event.target.style.border = "solid 1px black";
-        var ews_value = event.dataTransfer.getData('xcd');
-        var row = document.getElementById(ews_value);
-        var count;
-        var count2;
-        var count_value;
-        var count2_value;
+        var ews_value = event.dataTransfer.getData('xcd'),
+            row = document.getElementById(ews_value),
+            count,
+            count2,
+            count_value,
+            count2_value;
         //If currently assigned to someone but not owner drop target
         var old_owner = row.cells[4].textContent.toLowerCase();
         if (old_owner != "none" && old_owner != owner) {
@@ -231,8 +256,7 @@ function tablesort() {
             count_value =  parseInt(count.textContent) + 1;
             count.textContent = count_value;
             //Fix title for user box
-            var newTitle = document.getElementById(owner + '_div');
-            newTitle.setAttribute('title', count_value + ' Jobs Assigned');
+            document.getElementById(owner + '_div').setAttribute('title', count_value + ' Jobs Assigned');
             var upChange = new Array(ews_value, owner);
             self.port.emit("CAEJobLog-at-tenneco-dot-com:update", upChange);
             console.log("Job reassignment complete");
@@ -260,11 +284,7 @@ function tablesort() {
             count_value =  parseInt(count.textContent) + 1;
             count.textContent = count_value;
             //Fix title for user box
-            var newTitle = document.getElementById(owner + '_div');
-            newTitle.setAttribute('title', count_value + ' Jobs Assigned');
-            //Fix sum values - BROKEN
-            //var theSum = document.getElementById("ews_totala");
-            //theSum.textContent = theSum.textContent+1;
+            document.getElementById(owner + '_div').setAttribute('title', count_value + ' Jobs Assigned');
             var upChange = new Array(ews_value, owner);
             self.port.emit("CAEJobLog-at-tenneco-dot-com:update", upChange); 
         }
@@ -275,12 +295,5 @@ function tablesort() {
         event.preventDefault(); // don't forget this!
         return false;
     }
-
-
-
-
-    
-    
-    
 } 
 

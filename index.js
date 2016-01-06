@@ -33,40 +33,28 @@ const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 const { OS, TextEncoder, TextDecoder } = Cu.import("resource://gre/modules/osfile.jsm", {});
 Cu.import("resource://gre/modules/RemotePageManager.jsm");
 
-//const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
-const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\test\\"; //TEST DATA
+const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\Get out\\stop it\\";
+//const pathBase = "J:\\DEPT\\Core Engineering\\CAE\\JL\\test\\"; //TEST DATA
 const UproFile = OS.Path.join(OS.Constants.Path.profileDir, "CAEwidgets");
 var myIconURL = self.data.url("./icon-64.png");
 var fileURL = require("./data/lib/fileURL.js");
 
 exports.main = function(options, callbacks) {
-    if (options.loadReason == "install") {
+    if (options.loadReason == "install" || options.loadReason == "startup") {
         factory = new Factory(AboutCAEJobs);
         factory = new Factory(About0Viewer);
         factory = new Factory(About1Viewer);
         factory = new Factory(About2Viewer);
         factory = new Factory(About3Viewer);
         registerRemotePages();
-        //var thename = OS.Path.join(UproFile, "caejobs.html");
-        //var fromPath = pathBase + "caejobs.blank";
-        //var promise = OS.File.copy(fromPath, thename);
-        //promise.then(
-        //    function(aStat) {
-        //        console.log('Copy blank caejobs Success');
-        //    },
-        //    function(aReason) {
-        //        console.error('Copy blank caejobs failed, see console for details');
-        //        console.info('promise rejected', aReason);
-        //    }
-        //);
-    } else if (options.loadReason == "startup") {
-        factory = new Factory(AboutCAEJobs);
-        factory = new Factory(About0Viewer);
-        factory = new Factory(About1Viewer);
-        factory = new Factory(About2Viewer);
-        factory = new Factory(About3Viewer);
-        registerRemotePages();
-    }
+        //Check if pages are open and reload
+        for each (var tab in tabs) {
+          if (tab.url == "about:caejobs" || tab.url == "about:" + users[0] || tab.url == "about:" + users[1] || tab.url == "about:" + users[2] || tab.url == "about:" + users[3]) {
+            tab.reload();
+          }
+        }
+    } 
+
 };
 
 exports.onUnload = function (reason) {
@@ -81,47 +69,12 @@ exports.onUnload = function (reason) {
 };
 
 function registerRemotePages(){
-    let CAEmanager = new RemotePages("about:caejobs");
-    let Gmanager = new RemotePages("about:" + users[0]);
-    let Smanager = new RemotePages("about:" + users[1]);
-    let Pmanager = new RemotePages("about:" + users[2]);
-    let Hmanager = new RemotePages("about:" + users[3]);
+    new RemotePages("about:caejobs");
+    new RemotePages("about:" + users[0]);
+    new RemotePages("about:" + users[1]);
+    new RemotePages("about:" + users[2]);
+    new RemotePages("about:" + users[3]);
 }
-
-//Watch user log for updates (Job changes) (ALPHA CODE)
-//var prefUser = "paul";
-//var prefUlog = pathBase + prefUser + '_log.txt';
-
-/* var chokidar = require('chokidar');
-var watcher = chokidar.watch(prefUlog, {
-  ignored: /[\/\\]\./, persistent: true
-});
-
-var log = console.log.bind(console);
-
-watcher
-  .on('change', function(path) { log('File', path, 'has been changed'); })
-  .on('unlink', function(path) { log('File', path, 'has been removed'); })
-  .on('unlinkDir', function(path) { log('Directory', path, 'has been removed'); })
-  .on('error', function(error) { log('Error happened', error); })
-  .on('ready', function() { log('Initial scan complete. Ready for changes.'); })
-  .on('raw', function(event, path, details) { log('Raw event info:', event, path, details); })
-
-// 'add', 'addDir' and 'change' events also receive stat() results as second
-// argument when available: http://nodejs.org/api/fs.html#fs_class_fs_stats
-watcher.on('change', function(path, stats) {
-  if (stats) console.log('File', path, 'changed size to', stats.size);
-});
-
-// Un-watch some files.
-//watcher.unwatch('new-file*');
-
-// Only needed if watching is `persistent: true`.
-watcher.close(); */
-
-
-
-
 
 //Create empty note log files if they do not exist, writeatomic error without if statements
 function createBlank(user) {
@@ -204,8 +157,6 @@ function openAndReuseOneTabPerURL(url) {
 }
 
 cae_panel.port.on("click_link", function (text) {
-    //tabs.open(self.data.url(text));
-    //console.log(text);
     if (text == "oracle") {
         var clipboard = require("sdk/clipboard");
         clipboard.set("<script>var fileref=document.createElement('script');fileref.setAttribute('type','text/javascript');fileref.setAttribute('src', 'http://tamilan.na.ten/cae/EWS/ews.js');document.getElementsByTagName('head')[0].appendChild(fileref);</script><p><a class='iframe' id='caer' href='http://tamilan.na.ten/cae/EWS/viewer.htm'>View Results</a></p>" + preferences.userID);
@@ -215,42 +166,18 @@ cae_panel.port.on("click_link", function (text) {
             iconURL: myIconURL
         });
     }
-//http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_metric_report?p_ewo_no2=&p_pso_no=&p_author_id=All&p_pso_engr_id=All&p_drstart_date=&p_drend_date=&p_part_no=All&p_project_no2=&p_wo_phase=OPEN+ALL&p_phase_flag=No?CAEJL
+
     else if (text == "assign") {
         openAndReuseOneTabPerURL("about:caejobs");
-        // tabs.open({
-            // url: "about:caejobs",
-            // isPinned: true,
-            // inNewWindow: false,
-            // inBackground: false
-        // });
     }
     else if (text == "upload") {
         openAndReuseOneTabPerURL("http://tamilan.na.ten/cae/EWS/");
-        // tabs.open({
-            // url: "http://tamilan.na.ten/cae/EWS/",
-            // isPinned: true,
-            // inNewWindow: false,
-            // inBackground: false
-        // });
     }
     else if (text == "admin") {
         openAndReuseOneTabPerURL("http://tamilan.na.ten/cae/EWS/CAEadmin.php");
-        // tabs.open({
-            // url: "http://tamilan.na.ten/cae/EWS/CAEadmin.php",
-            // isPinned: true,
-            // inNewWindow: false,
-            // inBackground: false
-        // });
     }
     else {
         openAndReuseOneTabPerURL("about:" + text);
-        // tabs.open({
-            // url: "about:" + text,
-            // isPinned: true,
-            // inNewWindow: false,
-            // inBackground: false
-        // });
     } 
     handleHide();
 });
@@ -360,29 +287,11 @@ pageMod.PageMod({
                 iconURL: myIconURL
             });
             updateJobs();            //Start update process
-            //worker.port.emit("CAEJobLog-at-tenneco-dot-com:pageUpdate");
         });
         
-        // worker.port.on('CAEJobLog-at-tenneco-dot-com:prints', function (message) {
-            // //var URLarray = array.data;
-            // var url = message[0];
-            // var part = message[1];
-            // if (url.includes("p_part_id")) {
-                // var urlCHK = fileURL.FSdisplay(String(/[^\s]+/.exec(part)));
-                // if (urlCHK != "unknown") {
-                    // var url_new = urlCHK;
-                    // var url_old = url;
-                    // var URLs = new Array(url_new, url_old);
-                    // worker.port.emit("CAEJobLog-at-tenneco-dot-com:dPrints", URLs);
-                // }
-            // }
-        // });
-        
-        // worker.port.on('CAEJobLog-at-tenneco-dot-com:badge', function (state) {
-            // var num = state;
-            // cae_button.badge = num;
-            // cae_button.badgeColor = "#AA00AA";
-        // });
+        worker.port.on('CAEJobLog-at-tenneco-dot-com:aboutOpen', function (user) {
+            openAndReuseOneTabPerURL("about:" + user);
+        });
         
         worker.port.on('CAEJobLog-at-tenneco-dot-com:update', function (upChange) {
             var ews = upChange[0];
@@ -462,25 +371,6 @@ pageMod.PageMod({
             }
         });
         
-        // worker.port.on('CAEJobLog-at-tenneco-dot-com:rtn_logged', function (message) {
-            // // Send user log to content script when requested
-            // var user = message;
-            // var user_path = pathBase + user + "_log.txt";
-            // var user_log_str = readText(user_path);
-            // var user_log = "";
-            // if (user_log_str !== null) {
-                // user_log = user_log_str.split(",");
-            // }
-            // // For widgets
-            // var filepath = OS.Path.join(UproFile, user + ".txt");
-            // var guy_path2 = filepath;
-            // var guyws_log = readText(guy_path2);
-            // //Send user ews log & widget arrays
-            // var array = new Array(guyws_log, user_log);
-            // var userIndex = users.indexOf(user);
-            // worker.port.emit("CAEJobLog-at-tenneco-dot-com:userLog_" + userIndex, array);
-        // });
-        
         worker.port.on("CAEJobLog-at-tenneco-dot-com:clearCompleted", function() {
             // Update user logs for completed/closed jobs (jobs not in ews_array)
             var user;
@@ -550,18 +440,19 @@ pageMod.PageMod({
                         }
                     }
                     
-                    var str = '',
-                        array = JSON.parse(datadump),
+                    var array = JSON.parse(datadump),
                         ews_array = [],
                         assigned = '';
                     worker.port.emit("CAEJobLog-at-tenneco-dot-com:totalUpdate", array.length);
                     cae_button.badge = array.length;
                     cae_button.badgeColor = "#aa00aa";
                     for (var i = 0; i < array.length; i++) {
-                        var ews = array[i].EWS;
-                        var bu = array[i].BU;
-                        var pn = array[i].PartNo;
-                        var sub = array[i].Submit;
+                        var str = '',
+                            ews = array[i].EWS,
+                            bu = array[i].BU,
+                            pn = array[i].PartNo,
+                            sub = array[i].Submit,
+                            pnCHK = fileURL.FSdisplay(pn);
                         assigned = 'None';
                         ews_array.push(ews);
                         for (var r=0; r < user_arrays.length; r++) { //for each user log array
@@ -571,7 +462,6 @@ pageMod.PageMod({
                                 }
                             } 
                         }
-                        var pnCHK = fileURL.FSdisplay(pn);
                         if (assigned == 'None') {
                             str += '<tr id="'+ ews + '" class="dnd border-fade wobble-horizontal" draggable="true">';
                             str += '<td><a href="http://pafoap01:8888/pls/prod/ece_ewo_web.ece_ewo_page?in_ewr_no=' + ews + '">' + ews + '</a></td>';
@@ -600,10 +490,10 @@ pageMod.PageMod({
                             cae_button.badge = curtotal-1;
                             worker.port.emit("CAEJobLog-at-tenneco-dot-com:countUpdate", assigned);
                         }
-                    }
                     worker.port.emit("CAEJobLog-at-tenneco-dot-com:rowUpdate", str);
-                    //UNCOMMENT ME FOR PROD
-                    //saveEWSRecords(ews_array);
+                    }
+                    worker.port.emit("CAEJobLog-at-tenneco-dot-com:finalUpdate");
+                    saveEWSRecords(ews_array);
                 }, true, true);
               }
             })); 
@@ -683,7 +573,7 @@ pageMod.PageMod({
     contentScriptFile: ["./lib/jquery-2.1.4.js",
                       "./lib/jquery-ui.min.js",
                       "./lib/jquery.gridster.js",
-                      "./js/joblog_guy.js"],
+                      "./js/joblog_" + users[0] + ".js"],
     onAttach: function(worker) {
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
@@ -718,10 +608,10 @@ pageMod.PageMod({
             }
             // For widgets
             var filepath = OS.Path.join(UproFile, user + ".txt");
-            var guy_path2 = filepath;
-            var guyws_log = readText(guy_path2);
+            var u0_path2 = filepath;
+            var u0ws_log = readText(u0_path2);
             //Send user ews log & widget arrays
-            var array = new Array(guyws_log, user_log);
+            var array = new Array(u0ws_log, user_log);
             var userIndex = users.indexOf(user);
             worker.port.emit("CAEJobLog-at-tenneco-dot-com:userLog_" + userIndex, array);
         });
@@ -765,7 +655,7 @@ pageMod.PageMod({
     contentScriptFile: ["./lib/jquery-2.1.4.js",
                       "./lib/jquery-ui.min.js",
                       "./lib/jquery.gridster.js",
-                      "./js/joblog_scott.js"],
+                      "./js/joblog_" + users[1] + ".js"],
     onAttach: function(worker) {
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
@@ -800,10 +690,10 @@ pageMod.PageMod({
             }
             // For widgets
             var filepath = OS.Path.join(UproFile, user + ".txt");
-            var scott_path2 = filepath;
-            var scottws_log = readText(scott_path2);
+            var u1_path2 = filepath;
+            var u1ws_log = readText(u1_path2);
             //Send user ews log & widget arrays
-            var array = new Array(scottws_log, user_log);
+            var array = new Array(u1ws_log, user_log);
             var userIndex = users.indexOf(user);
             worker.port.emit("CAEJobLog-at-tenneco-dot-com:userLog_" + userIndex, array);
         });
@@ -847,7 +737,7 @@ pageMod.PageMod({
     contentScriptFile: ["./lib/jquery-2.1.4.js",
                       "./lib/jquery-ui.min.js",
                       "./lib/jquery.gridster.js",
-                      "./js/joblog_paul.js"],
+                      "./js/joblog_" + users[2] + ".js"],
     onAttach: function(worker) {
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
@@ -882,10 +772,10 @@ pageMod.PageMod({
             }
             // For widgets
             var filepath = OS.Path.join(UproFile, user + ".txt");
-            var paul_path2 = filepath;
-            var paulws_log = readText(paul_path2);
+            var u2_path2 = filepath;
+            var u2ws_log = readText(u2_path2);
             //Send user ews log & widget arrays
-            var array = new Array(paulws_log, user_log);
+            var array = new Array(u2ws_log, user_log);
             var userIndex = users.indexOf(user);
             worker.port.emit("CAEJobLog-at-tenneco-dot-com:userLog_" + userIndex, array);
         });
@@ -929,7 +819,7 @@ pageMod.PageMod({
     contentScriptFile: ["./lib/jquery-2.1.4.js",
                       "./lib/jquery-ui.min.js",
                       "./lib/jquery.gridster.js",
-                      "./js/joblog_suzhou.js"],
+                      "./js/joblog_" + users[3] + ".js"],
     onAttach: function(worker) {
         var cae_menuItem = cm.Item({
             label: "Unassign EWS",
@@ -964,10 +854,10 @@ pageMod.PageMod({
             }
             // For widgets
             var filepath = OS.Path.join(UproFile, user + ".txt");
-            var suzhou_path2 = filepath;
-            var suzhouws_log = readText(suzhou_path2);
+            var u3_path2 = filepath;
+            var u3ws_log = readText(u3_path2);
             //Send user ews log & widget arrays
-            var array = new Array(suzhouws_log, user_log);
+            var array = new Array(u3ws_log, user_log);
             var userIndex = users.indexOf(user);
             worker.port.emit("CAEJobLog-at-tenneco-dot-com:userLog_" + userIndex, array);
         });
@@ -1011,21 +901,7 @@ function dfCHK(thename){
     var promiseA = OS.File.writeAtomic(thename, "", { tmpPath: thename + '.tmp', noOverwrite: true });
     promiseA.then(
         function(aVal) {
-            //If caejobs then copy blank file
-            if (thename == OS.Path.join(UproFile, "caejobs.html")){
-                var fromPath = pathBase + "caejobs.blank";
-                //var toPath = OS.Path.join(UproFile, "caejobs.html");
-                var promise = OS.File.copy(fromPath, thename);
-                promise.then(
-                    function(aStat) {
-                        console.log('Copy blank caejobs Success');
-                    },
-                    function(aReason) {
-                        console.error('Copy blank caejobs failed, see console for details');
-                        console.info('promise rejected', aReason);
-                    }
-                );
-            }
+            //console.log('Write Sucessful');
         },
         function(aReason) {
             console.log('WriteAtomic failed for reason: ', aReason);
@@ -1086,10 +962,7 @@ var factory;
 const aboutCAEJobsDescription = 'About CAE Jobs';
 const aboutCAEJobsUUID = 'bf031960-0ac3-11e5-b939-0800200c9a66';
 const aboutCAEJobs_word = 'caejobs';
-//const aboutCAEJobs_page = OS.Path.toFileURI(OS.Path.join(UproFile, 'caejobs.html'));
 const aboutCAEJobs_page = "resource://CAEJobLog-at-tenneco-dot-com/data/caejobs.html";
-//FIX me
-//NEED TABLE DATA IN JSON FORMAT TO USE STATIC CAEJOBS PAGE
 
 const about0Description = "About " + users[0];
 const about0UUID = "b4c22650-df83-11e4-8830-0800200c9a66";
