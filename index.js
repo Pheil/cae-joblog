@@ -260,7 +260,7 @@ pageMod.PageMod({
             image: self.data.url("./uEWS.png"),
             contentScript: 'self.on("click", function (node) {' +
                          '  var row = document.getElementById(node.id);' +
-                         '  var owner = row.cells[5].textContent;' +
+                         '  var owner = row.cells[4].textContent;' +
                          '  var ews = node.id;' +
                          '  var upChange = JSON.stringify({' +
                          '  ews: ews,' +
@@ -269,7 +269,7 @@ pageMod.PageMod({
                          '  self.postMessage(upChange);' +
                          '  row.setAttribute("class", "dnd border-fade wobble-horizontal");' +
                          '  row.setAttribute("style", "background-color:#E6EEEE;");' +
-                         '  row.cells[5].textContent = "None";' +
+                         '  row.cells[4].textContent = "None";' +
                          '});',
             onMessage: function (upChange) {
                 unassign(upChange);
@@ -372,6 +372,11 @@ pageMod.PageMod({
         });
         
         worker.port.on("CAEJobLog-at-tenneco-dot-com:clearCompleted", function() {
+            notifications.notify({
+                title: "CAE Job Log",
+                text: "Updated request completed.",
+                iconURL: myIconURL
+            });
             // Update user logs for completed/closed jobs (jobs not in ews_array)
             var user;
             for (var j=0; j < users.length; j++) {
@@ -541,10 +546,21 @@ pageMod.PageMod({
                     cae_button.badgeColor = "#aa00aa";
                 }
             }
-        function arrdestroy(arr, val) {
-            for (var i = 0; i < arr.length; i++) if (arr[i] === val) arr.splice(i, 1);
-            return arr;
-        }
+            function arrdestroy(arr, val) {
+                for (var i = 0; i < arr.length; i++) if (arr[i] === val) arr.splice(i, 1);
+                return arr;
+            }
+            //Update user log on server
+            Request({
+                url: "http://tamilan.na.ten/cae/Joblog-backend/handler.php",
+                content: { 
+                    Username: owner,
+                    EWSArray: user_log,
+                    },
+                onComplete: function (response) {
+                    console.log( response.text );
+                }
+            }).post(); 
         }
     }
 });

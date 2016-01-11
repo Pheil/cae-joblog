@@ -137,11 +137,12 @@ self.port.on("CAEJobLog-at-tenneco-dot-com:finalUpdate", function(total) {
     // Add dragging handlers, update sort, send request to clear closed
     tableDrag();
     
+    //Delay is needed otherwise sorting will not happen
     setTimeout(function() { 
         /* e.g. sort by the second column in descending order */
         var sorting = [[3, 1]];
         $("#thetable").trigger("sorton", [sorting]);
-    }, 30);
+    }, 7);
     self.port.emit("CAEJobLog-at-tenneco-dot-com:clearCompleted");
 });
 
