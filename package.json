@@ -9,7 +9,7 @@
   "updateKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4eKexgL7FKgLzOWkC2QcZvY2IgvJKigq0pKWLql6OEz5ZjUPbqLmGYzCSfDnONoWl4BN2kYfGoKYJmqGVdKFbZlHeW7MZVjOXBNw7OixAX4YIvIWp5Z7EVhqTRRf9AU51M1+bT0oU4TuOtNHbfd7uHrepfdVOejXz+S0+tQnpniXb1+1UTvleQ9YODejFV0rA7mv1nCqBvg2JF4+op0gWwoMNiRa8c2fXiTjAWbhaysrlcgzToN2VTMpRVK6pQIfQsRFblJ/CsLnxwZLwBspXC+pqZEtV2VS4VP2o2vCD1M5HiSltBiCxOeLePs3NMTvmyPc9NyO1MjOIAhyadgylwIDAQAB",
   "keywords": [],
   "license": "MPL-2.0",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "homepage": "http://tamilan.na.ten/cae/",
   "iconURL": "./icon-48.png",
   "icon64URL": "./icon-64.png",

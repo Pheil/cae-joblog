@@ -230,8 +230,8 @@ function tableDrag() {
         var old_owner = row.cells[4].textContent.toLowerCase();
         if (old_owner != "none" && old_owner != owner) {
             ews = new Array(ews_value);
-            old_owner = new Array(old_owner);
-            var ewsChange = new Array(ews, old_owner);
+            old_owner2 = new Array(old_owner);
+            var ewsChange = new Array(ews, old_owner2);
             self.port.emit("CAEJobLog-at-tenneco-dot-com:unassign", ewsChange);
             count2 = document.getElementById(old_owner + '_note');
             count2_value =  parseInt(count2.textContent) - 1;

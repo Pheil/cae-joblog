@@ -343,11 +343,11 @@ pageMod.PageMod({
         });
         
         worker.port.on('CAEJobLog-at-tenneco-dot-com:unassign', function (upChange) {
-            console.log(ews + " unassigned from " + owner + ".");
-                
             // Unassign changed record
             var ews = upChange[0];
             var owner = upChange[1];
+            
+            console.log(ews + " unassigned from " + owner + ".");
             if (owner != "none") {
                 //Retrieve log
                 var user_path = pathBase + owner + "_log.txt";
@@ -360,6 +360,17 @@ pageMod.PageMod({
                 
                 //Send owner to remove value from
                 worker.port.emit("CAEJobLog-at-tenneco-dot-com:unassignNum", owner);
+                // Save user ews log to server
+                Request({
+                    url: "http://tamilan.na.ten/cae/Joblog-backend/handler.php",
+                    content: { 
+                        Username: owner,
+                        EWSArray: user_log,
+                        },
+                    onComplete: function (response) {
+                        console.log( response.text );
+                    }
+                }).post(); 
                 //Update Badge
                 var curtotal = cae_button.badge;
                 cae_button.badge = curtotal+1;
@@ -372,11 +383,6 @@ pageMod.PageMod({
         });
         
         worker.port.on("CAEJobLog-at-tenneco-dot-com:clearCompleted", function() {
-            notifications.notify({
-                title: "CAE Job Log",
-                text: "Updated request completed.",
-                iconURL: myIconURL
-            });
             // Update user logs for completed/closed jobs (jobs not in ews_array)
             var user;
             for (var j=0; j < users.length; j++) {
@@ -495,8 +501,13 @@ pageMod.PageMod({
                             cae_button.badge = curtotal-1;
                             worker.port.emit("CAEJobLog-at-tenneco-dot-com:countUpdate", assigned);
                         }
-                    worker.port.emit("CAEJobLog-at-tenneco-dot-com:rowUpdate", str);
+                        worker.port.emit("CAEJobLog-at-tenneco-dot-com:rowUpdate", str);
                     }
+                    notifications.notify({
+                        title: "CAE Job Log",
+                        text: "Updated request completed.",
+                        iconURL: myIconURL
+                    });
                     worker.port.emit("CAEJobLog-at-tenneco-dot-com:finalUpdate");
                     saveEWSRecords(ews_array);
                 }, true, true);
