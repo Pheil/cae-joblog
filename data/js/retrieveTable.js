@@ -17,8 +17,8 @@ function refreshInformation(output) {
    
     // Sets tag info so that columns can be sorted
     var table_b = output.getElementsByTagName('table')[0];
-    table_b.setAttribute('class', 'sortable');
-    table_b.setAttribute('id', 'thetable');
+    //table_b.setAttribute('class', 'sortable');
+    //table_b.setAttribute('id', 'thetable');
     
     //Delete projects row
     for (var row=0; row<table_b.rows.length;row++) {

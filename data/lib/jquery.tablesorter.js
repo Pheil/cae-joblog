@@ -792,7 +792,7 @@
                         }
                     });
                     // apply easy methods that trigger binded events
-                    $this.bind("update", function () {
+                    $this.bind("update", function (e, sort) {
                         var me = this;
                         setTimeout(function () {
                             // rebuild parsers.
@@ -800,6 +800,8 @@
                             me, $headers);
                             // rebuild the cache map
                             cache = buildCache(me);
+                            // ADDED
+                            if (sort) $(me).trigger('sorton', [me.config.sortList]);
                         }, 1);
                     }).bind("updateCell", function (e, cell) {
                         var config = this.config;

@@ -250,8 +250,8 @@ pageMod.PageMod({
 pageMod.PageMod({
     include: "about:caejobs",
     contentScriptWhen: 'end',
-    contentScriptFile: ["./lib/jquery-2.1.4.js",
-                      "./lib/jquery.tablesorter.js",
+    contentScriptFile: ["./lib/jquery-2.2.0.min.js",
+                      "./lib/jquery.tablesorter.js",//FILE HAS CUSTOM MODIFICATIONS
                       "./js/caejobs.js"],
     onAttach: function(worker) {
         var cae_menuItem = cm.Item({
@@ -283,7 +283,7 @@ pageMod.PageMod({
         worker.port.on('CAEJobLog-at-tenneco-dot-com:reloadx', function () {
             notifications.notify({
                 title: "CAE Job Log",
-                text: "Updated request submitted.",
+                text: "Update request in process.",
                 iconURL: myIconURL
             });
             updateJobs();            //Start update process
@@ -503,11 +503,6 @@ pageMod.PageMod({
                         }
                         worker.port.emit("CAEJobLog-at-tenneco-dot-com:rowUpdate", str);
                     }
-                    notifications.notify({
-                        title: "CAE Job Log",
-                        text: "Updated request completed.",
-                        iconURL: myIconURL
-                    });
                     worker.port.emit("CAEJobLog-at-tenneco-dot-com:finalUpdate");
                     saveEWSRecords(ews_array);
                 }, true, true);
@@ -597,7 +592,7 @@ function unassignUSER(upChange) {
 pageMod.PageMod({
     include: "about:" + users[0],
     contentScriptWhen: 'end',
-    contentScriptFile: ["./lib/jquery-2.1.4.js",
+    contentScriptFile: ["./lib/jquery-2.2.0.min.js",
                       "./lib/jquery-ui.min.js",
                       "./lib/jquery.gridster.js",
                       "./js/joblog_" + users[0] + ".js"],
@@ -679,7 +674,7 @@ pageMod.PageMod({
 pageMod.PageMod({
     include: "about:" + users[1],
     contentScriptWhen: 'end',
-    contentScriptFile: ["./lib/jquery-2.1.4.js",
+    contentScriptFile: ["./lib/jquery-2.2.0.min.js",
                       "./lib/jquery-ui.min.js",
                       "./lib/jquery.gridster.js",
                       "./js/joblog_" + users[1] + ".js"],
@@ -761,7 +756,7 @@ pageMod.PageMod({
 pageMod.PageMod({
     include: "about:" + users[2],
     contentScriptWhen: 'end',
-    contentScriptFile: ["./lib/jquery-2.1.4.js",
+    contentScriptFile: ["./lib/jquery-2.2.0.min.js",
                       "./lib/jquery-ui.min.js",
                       "./lib/jquery.gridster.js",
                       "./js/joblog_" + users[2] + ".js"],
@@ -843,7 +838,7 @@ pageMod.PageMod({
 pageMod.PageMod({
     include: "about:" + users[3],
     contentScriptWhen: 'end',
-    contentScriptFile: ["./lib/jquery-2.1.4.js",
+    contentScriptFile: ["./lib/jquery-2.2.0.min.js",
                       "./lib/jquery-ui.min.js",
                       "./lib/jquery.gridster.js",
                       "./js/joblog_" + users[3] + ".js"],

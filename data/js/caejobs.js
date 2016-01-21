@@ -108,7 +108,7 @@ self.port.on("CAEJobLog-at-tenneco-dot-com:rowUpdate", function(data) {
     // Load str for each row into table
     // TODO: Figure out how to only add updated records
     $('#thetable').append(data).fadeIn( "slow" );
-    $("#thetable").trigger("update");
+    $("#thetable").trigger("update", true)
 
 });
 
@@ -123,6 +123,10 @@ self.port.on("CAEJobLog-at-tenneco-dot-com:countUpdate", function(user) {
     // Update assigned job number
     var assignedSum = document.getElementById("ews_totala");
     assignedSum.textContent = parseInt(assignedSum.textContent) + 1;
+    
+    $("#thetable").trigger("update", true)
+    var sorting = [[3, 1]];
+    $("#thetable").trigger("sorton", [sorting]);
 });
 
 self.port.on("CAEJobLog-at-tenneco-dot-com:totalUpdate", function(total) {
@@ -138,11 +142,11 @@ self.port.on("CAEJobLog-at-tenneco-dot-com:finalUpdate", function(total) {
     tableDrag();
     
     //Delay is needed otherwise sorting will not happen
-    setTimeout(function() { 
-        /* e.g. sort by the second column in descending order */
-        var sorting = [[3, 1]];
-        $("#thetable").trigger("sorton", [sorting]);
-    }, 7);
+    //setTimeout(function() { 
+    //    /* e.g. sort by the second column in descending order */
+    //    var sorting = [[3, 1]];
+    //    $("#thetable").trigger("sorton", [sorting]);
+    //}, 1);
     self.port.emit("CAEJobLog-at-tenneco-dot-com:clearCompleted");
 });
 
